@@ -62,6 +62,12 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const regenerateKey = () => {
+        const newKey = Math.random().toString(36).substring(2, 8).toUpperCase();
+        setAccessKey(newKey);
+        toast.success("New key generated");
+    };
+
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
         if (!name.trim()) errs.name = MESSAGES.NAME_REQUIRED;
@@ -202,58 +208,77 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
                 {errors.name && <p className="text-[10px] text-destructive">{errors.name}</p>}
             </div>
 
-            {/* Visibility Toggle */}
+            {/* Visibility Settings - Segmented Control Style */}
             {!isEdit && (
-                <div className="space-y-2.5">
-                    <Label className="text-xs sm:text-sm">Visibility Settings</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <Button
+                <div className="space-y-3">
+                    <Label className="text-xs sm:text-sm font-bold text-foreground">Content Visibility</Label>
+                    <div className="flex p-1 bg-secondary/50 rounded-2xl border border-border/50">
+                        <button
                             type="button"
-                            variant={!isPrivate ? "default" : "outline"}
                             className={cn(
-                                "h-14 flex-col items-center justify-center gap-1.5 rounded-xl border-border/50 px-3",
-                                !isPrivate ? "bg-primary text-black shadow-lg" : "text-muted-foreground"
+                                "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all duration-300",
+                                !isPrivate ? "bg-primary text-black shadow-lg font-bold" : "text-muted-foreground hover:text-foreground"
                             )}
                             onClick={() => setIsPrivate(false)}
                         >
-                            <Unlock className="h-6 w-6" />
-                            <span className="text-xs font-bold">Public</span>
-                        </Button>
-                        <Button
+                            <Unlock className={cn("h-4 w-4", !isPrivate ? "animate-in zoom-in" : "")} />
+                            <span className="text-xs">Public</span>
+                        </button>
+                        <button
                             type="button"
-                            variant={isPrivate ? "default" : "outline"}
                             className={cn(
-                                "h-14 flex-col items-center justify-center gap-1.5 rounded-xl border-border/50 px-3",
-                                isPrivate ? "bg-primary text-black shadow-lg" : "text-muted-foreground"
+                                "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all duration-300",
+                                isPrivate ? "bg-primary text-black shadow-lg font-bold" : "text-muted-foreground hover:text-foreground"
                             )}
                             onClick={() => setIsPrivate(true)}
                         >
-                            <Lock className="h-6 w-6" />
-                            <span className="text-xs font-bold">Private</span>
-                        </Button>
+                            <Lock className={cn("h-4 w-4", isPrivate ? "animate-in zoom-in" : "")} />
+                            <span className="text-xs">Private</span>
+                        </button>
                     </div>
 
                     {isPrivate && (
-                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div className="relative rounded-xl border border-primary/20 bg-primary/5 p-3">
-                                <p className="mb-2 text-[10px] font-medium text-primary uppercase tracking-tight">Access Key (Required to Unlock)</p>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex h-10 flex-1 items-center gap-3 rounded-lg bg-black/40 px-3 border border-white/10">
-                                        <Key className="h-5 w-5 text-primary" />
-                                        <span className="text-sm font-black tracking-widest text-primary font-mono">{accessKey}</span>
-                                    </div>
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="outline"
-                                        className="h-10 w-10 border-white/10 bg-black/40 hover:bg-black/60 active:scale-90"
-                                        onClick={copyToClipboard}
-                                    >
-                                        {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
-                                    </Button>
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+                            <div className="relative rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-inner overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 opacity-[0.03]">
+                                    <Key className="h-16 w-16 -mr-4 -mt-4 text-primary" />
                                 </div>
-                                <p className="mt-2 text-[9px] text-muted-foreground italic flex items-center gap-1">
-                                    <Check className="h-3 w-3 text-primary" /> Share this key with people who should see this clip.
+
+                                <p className="mb-3 text-[10px] font-black text-primary uppercase tracking-[0.2em]">Shareable Access Key</p>
+
+                                <div className="flex items-center gap-2">
+                                    <div className="flex h-12 flex-1 items-center gap-3 rounded-xl bg-black/40 px-4 border border-white/10 shadow-lg group/keybox hover:border-primary/30 transition-colors">
+                                        <Key className="h-4 w-4 text-primary mt-0.5" />
+                                        <span className="text-base font-black tracking-[0.3em] text-primary font-mono select-all">
+                                            {accessKey}
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-1.5">
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-12 w-12 border-white/10 bg-black/40 hover:bg-black/60 active:scale-90 rounded-xl transition-all"
+                                            onClick={regenerateKey}
+                                            title="Regenerate Key"
+                                        >
+                                            <RefreshCw className="h-4 w-4 text-primary" />
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-12 w-12 border-white/10 bg-black/40 hover:bg-black/60 active:scale-90 rounded-xl transition-all"
+                                            onClick={copyToClipboard}
+                                            title="Copy Key"
+                                        >
+                                            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
+                                </div>
+                                <p className="mt-3 text-[10px] text-muted-foreground font-medium flex items-start gap-2 leading-relaxed">
+                                    <span className="mt-1 w-1 h-1 rounded-full bg-primary flex-shrink-0" />
+                                    Only people with this key can unlock and listen to this audio clip.
                                 </p>
                             </div>
                         </div>
