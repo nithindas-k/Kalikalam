@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 30 10% 96%;
+    --card: 0 0% 8%;
+    --card-foreground: 30 10% 96%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 30 10% 96%;
+    --primary: 25 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 30 10% 96%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 25 80% 15%;
+    --accent-foreground: 25 100% 80%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 16%;
+    --input: 0 0% 12%;
+    --ring: 25 100% 50%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.6);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+
+/* Card hover */
+.audio-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.audio-card:hover {
+  transform: translateY(-4px);
+  border-color: hsl(25 100% 50% / 0.5);
+}
+
+.playing-pulse {
+  border-color: hsl(var(--primary));
+}
+
+/* Audio player slide up */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.player-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Hero gradient */
+.hero-gradient {
+  background: hsl(var(--background));
+}
+
+/* Glassmorphism */
+.glass {
+  background: hsl(0 0% 0% / 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid hsl(0 0% 100% / 0.05);
+}
+
+/* Progress range input orange */
+input[type="range"].orange-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+
+input[type="range"].orange-range::-webkit-slider-runnable-track {
+  background: hsl(0 0% 20%);
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"].orange-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: hsl(var(--primary));
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  margin-top: -5px;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, hsl(0 0% 12%), hsl(0 0% 18%), hsl(0 0% 12%));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
