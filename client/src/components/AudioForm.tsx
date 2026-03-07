@@ -211,25 +211,25 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
                             type="button"
                             variant={!isPrivate ? "default" : "outline"}
                             className={cn(
-                                "h-11 flex-col items-center justify-center gap-1 rounded-xl border-border/50 px-3",
+                                "h-14 flex-col items-center justify-center gap-1.5 rounded-xl border-border/50 px-3",
                                 !isPrivate ? "bg-primary text-black shadow-lg" : "text-muted-foreground"
                             )}
                             onClick={() => setIsPrivate(false)}
                         >
-                            <Unlock className="h-4 w-4" />
-                            <span className="text-[10px] font-bold">Public Content</span>
+                            <Unlock className="h-6 w-6" />
+                            <span className="text-xs font-bold">Public</span>
                         </Button>
                         <Button
                             type="button"
                             variant={isPrivate ? "default" : "outline"}
                             className={cn(
-                                "h-11 flex-col items-center justify-center gap-1 rounded-xl border-border/50 px-3",
+                                "h-14 flex-col items-center justify-center gap-1.5 rounded-xl border-border/50 px-3",
                                 isPrivate ? "bg-primary text-black shadow-lg" : "text-muted-foreground"
                             )}
                             onClick={() => setIsPrivate(true)}
                         >
-                            <Lock className="h-4 w-4" />
-                            <span className="text-[10px] font-bold">Private Content</span>
+                            <Lock className="h-6 w-6" />
+                            <span className="text-xs font-bold">Private</span>
                         </Button>
                     </div>
 
@@ -239,7 +239,7 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
                                 <p className="mb-2 text-[10px] font-medium text-primary uppercase tracking-tight">Access Key (Required to Unlock)</p>
                                 <div className="flex items-center gap-2">
                                     <div className="flex h-10 flex-1 items-center gap-3 rounded-lg bg-black/40 px-3 border border-white/10">
-                                        <Key className="h-4 w-4 text-primary" />
+                                        <Key className="h-5 w-5 text-primary" />
                                         <span className="text-sm font-black tracking-widest text-primary font-mono">{accessKey}</span>
                                     </div>
                                     <Button
@@ -249,7 +249,7 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
                                         className="h-10 w-10 border-white/10 bg-black/40 hover:bg-black/60 active:scale-90"
                                         onClick={copyToClipboard}
                                     >
-                                        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                        {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
                                     </Button>
                                 </div>
                                 <p className="mt-2 text-[9px] text-muted-foreground italic flex items-center gap-1">
