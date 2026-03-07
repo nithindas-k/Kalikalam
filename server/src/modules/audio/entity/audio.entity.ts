@@ -6,6 +6,7 @@ export interface IAudioDocument extends Document {
     imagePublicId: string;
     audioUrl: string;
     audioPublicId: string;
+    creatorId?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const AudioSchema = new Schema<IAudioDocument>(
         imagePublicId: { type: String, required: true },
         audioUrl: { type: String, required: true },
         audioPublicId: { type: String, required: true },
+        creatorId: { type: String },
     },
     { timestamps: true }
 );

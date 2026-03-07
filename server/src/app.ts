@@ -9,7 +9,7 @@ import { API_ROUTES } from "./constants/routes";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+
 const allowedOrigins = [
     process.env.CLIENT_URL,
     "http://localhost:5173",
@@ -19,7 +19,7 @@ const allowedOrigins = [
 app.use(
     cors({
         origin: (origin, callback) => {
-            // Allow requests with no origin (like mobile apps or curl)
+      
             if (!origin) return callback(null, true);
             if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app")) {
                 callback(null, true);
@@ -35,18 +35,18 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+
 app.use(`${API_ROUTES.BASE}${API_ROUTES.AUDIOS}`, audioRoutes);
 
-// Health check
+
 app.get("/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Error handler (must be last)
+
 app.use(errorMiddleware);
 
-// Start
+
 connectDB().then(() => {
     app.listen(PORT, () => {
         console.log(`🚀 Server running on http://localhost:${PORT}`);

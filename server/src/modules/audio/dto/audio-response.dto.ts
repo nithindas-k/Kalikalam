@@ -3,5 +3,6 @@ export interface AudioResponseDTO {
     name: string;
     imageUrl: string;
     audioUrl: string;
+    creatorId: string;
     createdAt: string;
 }

@@ -8,6 +8,7 @@ export class AudioMapper {
             name: doc.name,
             imageUrl: doc.imageUrl,
             audioUrl: doc.audioUrl,
+            creatorId: doc.creatorId || "",
             createdAt: doc.createdAt.toISOString(),
         };
     }

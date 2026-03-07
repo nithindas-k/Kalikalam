@@ -6,6 +6,6 @@ export interface IAudioService {
     getAllAudios(): Promise<AudioResponseDTO[]>;
     getAudioById(id: string): Promise<AudioResponseDTO>;
     createAudio(dto: CreateAudioDTO): Promise<AudioResponseDTO>;
-    updateAudio(id: string, dto: UpdateAudioDTO): Promise<AudioResponseDTO>;
-    deleteAudio(id: string): Promise<void>;
+    updateAudio(id: string, dto: UpdateAudioDTO, creatorId: string): Promise<AudioResponseDTO>;
+    deleteAudio(id: string, creatorId: string): Promise<void>;
 }

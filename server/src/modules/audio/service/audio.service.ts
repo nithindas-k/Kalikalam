@@ -26,9 +26,14 @@ export class AudioService implements IAudioService {
         return AudioMapper.toResponse(doc);
     }
 
-    async updateAudio(id: string, dto: UpdateAudioDTO): Promise<AudioResponseDTO> {
+    async updateAudio(id: string, dto: UpdateAudioDTO, creatorId: string): Promise<AudioResponseDTO> {
         const existing = await this.repo.findById(id);
         if (!existing) throw Object.assign(new Error(MESSAGES.AUDIO_NOT_FOUND), { status: 404 });
+
+        // Ownership check
+        if (existing.creatorId !== creatorId) {
+            throw Object.assign(new Error("You do not have permission to edit this"), { status: 403 });
+        }
 
         // Delete old Cloudinary assets if replaced
         if (dto.imagePublicId && dto.imagePublicId !== existing.imagePublicId) {
@@ -43,9 +48,14 @@ export class AudioService implements IAudioService {
         return AudioMapper.toResponse(updated);
     }
 
-    async deleteAudio(id: string): Promise<void> {
+    async deleteAudio(id: string, creatorId: string): Promise<void> {
         const doc = await this.repo.findById(id);
         if (!doc) throw Object.assign(new Error(MESSAGES.AUDIO_NOT_FOUND), { status: 404 });
+
+        // Ownership check
+        if (doc.creatorId !== creatorId) {
+            throw Object.assign(new Error("You do not have permission to delete this"), { status: 403 });
+        }
 
         // Delete from Cloudinary
         await cloudinary.uploader.destroy(doc.imagePublicId);

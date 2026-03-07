@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { AudioItem } from "@/types/audio.types";
 import { cn } from "@/lib/utils";
+import { getDeviceId } from "@/utils/device";
 
 interface AudioCardProps {
     audio: AudioItem;
@@ -26,6 +27,8 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, onDelete }: AudioCardProps) {
+    const isOwner = audio.creatorId === getDeviceId();
+
     return (
         <Card className={cn(
             "group relative overflow-hidden border-border bg-card transition-all duration-300 shadow-lg",
@@ -92,24 +95,26 @@ export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, 
                     {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 fill-current" />}
                     <span>{isPlaying ? "Pause" : "Listen"}</span>
                 </Button>
-                <div className="flex gap-1">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 border-border sm:h-9 sm:w-9 hover:border-primary/50 transition-colors"
-                        onClick={() => onEdit(audio)}
-                    >
-                        <Pencil className="h-3 w-3.5 sm:h-3.5 sm:w-3.5" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 border-border hover:bg-destructive hover:text-white sm:h-9 sm:w-9 transition-colors"
-                        onClick={() => onDelete(audio)}
-                    >
-                        <Trash2 className="h-3 w-3.5 sm:h-3.5 sm:w-3.5" />
-                    </Button>
-                </div>
+                {isOwner && (
+                    <div className="flex gap-1">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 border-border sm:h-9 sm:w-9 hover:border-primary/50 transition-colors"
+                            onClick={() => onEdit(audio)}
+                        >
+                            <Pencil className="h-3 w-3.5 sm:h-3.5 sm:w-3.5" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 border-border hover:bg-destructive hover:text-white sm:h-9 sm:w-9 transition-colors"
+                            onClick={() => onDelete(audio)}
+                        >
+                            <Trash2 className="h-3 w-3.5 sm:h-3.5 sm:w-3.5" />
+                        </Button>
+                    </div>
+                )}
             </CardFooter>
         </Card>
     );

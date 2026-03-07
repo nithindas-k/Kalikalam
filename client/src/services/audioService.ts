@@ -1,8 +1,14 @@
 import axios from "axios";
+import { getDeviceId } from "@/utils/device";
 import type { AudioItem, CreateAudioPayload, UpdateAudioPayload } from "@/types/audio.types";
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+});
+
+api.interceptors.request.use((config) => {
+    config.headers["X-Creator-Id"] = getDeviceId();
+    return config;
 });
 
 interface ApiResponse<T> {

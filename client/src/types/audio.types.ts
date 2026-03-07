@@ -3,6 +3,7 @@ export interface AudioItem {
     name: string;
     imageUrl: string;
     audioUrl: string;
+    creatorId: string;
     createdAt: string;
 }
 

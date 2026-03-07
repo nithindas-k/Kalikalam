@@ -4,4 +4,5 @@ export interface CreateAudioDTO {
     imagePublicId: string;
     audioUrl: string;
     audioPublicId: string;
+    creatorId: string;
 }

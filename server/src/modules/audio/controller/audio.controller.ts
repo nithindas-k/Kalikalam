@@ -29,7 +29,13 @@ export class AudioController implements IAudioController {
 
     async create(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
+            const creatorId = req.headers["x-creator-id"] as string;
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+            if (!creatorId) {
+                res.status(401).json({ success: false, message: "Identification missing" });
+                return;
+            }
 
             if (!req.body.name || !files?.["image"]?.[0] || !files?.["audio"]?.[0]) {
                 res.status(400).json({ success: false, message: MESSAGES.VALIDATION_ERROR });
@@ -42,6 +48,7 @@ export class AudioController implements IAudioController {
                 imagePublicId: files["image"][0].filename,
                 audioUrl: files["audio"][0].path,
                 audioPublicId: files["audio"][0].filename,
+                creatorId: creatorId,
             };
 
             const data = await this.service.createAudio(dto);
@@ -53,6 +60,12 @@ export class AudioController implements IAudioController {
 
     async update(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
+            const creatorId = req.headers["x-creator-id"] as string;
+            if (!creatorId) {
+                res.status(401).json({ success: false, message: "Identification missing" });
+                return;
+            }
+
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
             const dto: UpdateAudioDTO = {};
 
@@ -66,7 +79,7 @@ export class AudioController implements IAudioController {
                 dto.audioPublicId = files["audio"][0].filename;
             }
 
-            const data = await this.service.updateAudio(req.params.id, dto);
+            const data = await this.service.updateAudio(req.params.id, dto, creatorId);
             res.status(200).json(successResponse(MESSAGES.AUDIO_UPDATED, data));
         } catch (error) {
             next(error);
@@ -75,7 +88,13 @@ export class AudioController implements IAudioController {
 
     async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            await this.service.deleteAudio(req.params.id);
+            const creatorId = req.headers["x-creator-id"] as string;
+            if (!creatorId) {
+                res.status(401).json({ success: false, message: "Identification missing" });
+                return;
+            }
+
+            await this.service.deleteAudio(req.params.id, creatorId);
             res.status(200).json(successResponse(MESSAGES.AUDIO_DELETED, null));
         } catch (error) {
             next(error);
