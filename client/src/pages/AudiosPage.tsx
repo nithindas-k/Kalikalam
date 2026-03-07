@@ -18,6 +18,7 @@ export default function AudiosPage() {
     const [editAudioItem, setEditAudioItem] = useState<AudioItem | undefined>(undefined);
     const [deleteAudioItem, setDeleteAudioItem] = useState<AudioItem | null>(null);
     const [playingAudio, setPlayingAudio] = useState<AudioItem | null>(null);
+    const [isPaused, setIsPaused] = useState(false);
 
     // Add
     const handleAddSubmit = async (name: string, image: File | null, audio: File | null): Promise<boolean> => {
@@ -46,9 +47,10 @@ export default function AudiosPage() {
 
     const handlePlayToggle = (audio: AudioItem) => {
         if (playingAudio?.id === audio.id) {
-            setPlayingAudio(null);
+            setIsPaused(!isPaused);
         } else {
             setPlayingAudio(audio);
+            setIsPaused(false);
         }
     };
 
@@ -107,6 +109,7 @@ export default function AudiosPage() {
                 <AudioList
                     audios={audios}
                     currentPlayingId={playingAudio?.id ?? null}
+                    isPaused={isPaused}
                     onPlay={handlePlayToggle}
                     onEdit={openEdit}
                     onDelete={openDelete}
@@ -138,7 +141,12 @@ export default function AudiosPage() {
 
             {/* Floating player */}
             {playingAudio && (
-                <AudioPlayer audio={playingAudio} onClose={() => setPlayingAudio(null)} />
+                <AudioPlayer
+                    audio={playingAudio}
+                    isPaused={isPaused}
+                    onTogglePause={() => setIsPaused(!isPaused)}
+                    onClose={() => setPlayingAudio(null)}
+                />
             )}
         </div>
     );

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface AudioCardProps {
     audio: AudioItem;
+    isActive: boolean;
     isPlaying: boolean;
     onPlay: (audio: AudioItem) => void;
     onEdit: (audio: AudioItem) => void;
@@ -24,11 +25,11 @@ function timeAgo(dateStr: string): string {
     return "Just now";
 }
 
-export default function AudioCard({ audio, isPlaying, onPlay, onEdit, onDelete }: AudioCardProps) {
+export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, onDelete }: AudioCardProps) {
     return (
         <Card className={cn(
-            "group relative overflow-hidden border-border bg-card transition-all duration-300",
-            isPlaying ? "ring-2 ring-primary border-transparent" : "hover:border-primary/50"
+            "group relative overflow-hidden border-border bg-card transition-all duration-300 shadow-lg",
+            isActive ? "ring-2 ring-primary border-transparent" : "hover:border-primary/50"
         )}>
             {/* Thumbnail Area */}
             <div
@@ -47,7 +48,7 @@ export default function AudioCard({ audio, isPlaying, onPlay, onEdit, onDelete }
                     "absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300",
                     isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                 )}>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-black shadow-lg">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-black shadow-lg transition-transform active:scale-90">
                         {isPlaying ? (
                             <Pause className="h-6 w-6 fill-black" />
                         ) : (
@@ -59,7 +60,7 @@ export default function AudioCard({ audio, isPlaying, onPlay, onEdit, onDelete }
                 {/* Status Badge */}
                 {isPlaying && (
                     <div className="absolute left-2 top-2">
-                        <Badge variant="default" className="bg-primary text-black font-bold">
+                        <Badge variant="default" className="bg-primary text-black font-bold animate-pulse">
                             Playing
                         </Badge>
                     </div>
@@ -82,7 +83,10 @@ export default function AudioCard({ audio, isPlaying, onPlay, onEdit, onDelete }
                 <Button
                     variant="secondary"
                     size="sm"
-                    className="h-8 flex-1 gap-1.5 text-[10px] font-bold sm:h-9 sm:text-xs"
+                    className={cn(
+                        "h-8 flex-1 gap-1.5 text-[10px] font-bold sm:h-9 sm:text-xs transition-colors",
+                        isPlaying ? "bg-primary text-black hover:bg-primary/90" : ""
+                    )}
                     onClick={() => onPlay(audio)}
                 >
                     {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 fill-current" />}
@@ -92,7 +96,7 @@ export default function AudioCard({ audio, isPlaying, onPlay, onEdit, onDelete }
                     <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 border-border sm:h-9 sm:w-9"
+                        className="h-8 w-8 border-border sm:h-9 sm:w-9 hover:border-primary/50 transition-colors"
                         onClick={() => onEdit(audio)}
                     >
                         <Pencil className="h-3 w-3.5 sm:h-3.5 sm:w-3.5" />
@@ -100,7 +104,7 @@ export default function AudioCard({ audio, isPlaying, onPlay, onEdit, onDelete }
                     <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 border-border hover:bg-destructive hover:text-white sm:h-9 sm:w-9"
+                        className="h-8 w-8 border-border hover:bg-destructive hover:text-white sm:h-9 sm:w-9 transition-colors"
                         onClick={() => onDelete(audio)}
                     >
                         <Trash2 className="h-3 w-3.5 sm:h-3.5 sm:w-3.5" />
