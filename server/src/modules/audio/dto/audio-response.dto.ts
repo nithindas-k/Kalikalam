@@ -5,5 +5,6 @@ export interface AudioResponseDTO {
     audioUrl: string;
     creatorId: string;
     isPrivate: boolean;
+    accessKey?: string;
     createdAt: string;
 }

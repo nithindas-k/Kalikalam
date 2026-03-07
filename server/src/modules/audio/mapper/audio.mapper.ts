@@ -10,6 +10,7 @@ export class AudioMapper {
             audioUrl: doc.audioUrl,
             creatorId: doc.creatorId || "",
             isPrivate: doc.isPrivate,
+            accessKey: doc.accessKey,
             createdAt: doc.createdAt.toISOString(),
         };
     }

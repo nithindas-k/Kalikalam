@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Play, Pencil, Trash2, Clock, Pause, Lock, Unlock, Key } from "lucide-react";
+import { Play, Pencil, Trash2, Clock, Pause, Lock, Unlock, Key, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -139,10 +139,26 @@ export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, 
             </div>
 
             <CardContent className="p-2.5 sm:p-3">
-                <div className="flex flex-col gap-0.5">
-                    <h3 className="line-clamp-1 text-sm font-bold text-foreground">
-                        {audio.name}
-                    </h3>
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                        <h3 className="line-clamp-1 text-sm font-bold text-foreground">
+                            {audio.name}
+                        </h3>
+                        {isOwner && audio.isPrivate && audio.accessKey && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(audio.accessKey!);
+                                    toast.success("Key copied!");
+                                }}
+                                className="flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black text-primary border border-primary/20 hover:bg-primary/20 transition-colors uppercase tracking-widest"
+                            >
+                                <Key className="h-2.5 w-2.5" />
+                                <span>{audio.accessKey}</span>
+                                <Copy className="ml-0.5 h-2.5 w-2.5" />
+                            </button>
+                        )}
+                    </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         {timeAgo(audio.createdAt)}
