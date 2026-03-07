@@ -19,14 +19,14 @@ export default function HeroSection({ onAddClick }: HeroSectionProps) {
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 leading-tight">
+            <h1 className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter mb-6 leading-[1.1] sm:leading-tight">
                 The Laughs of
                 <br />
-                <span className="text-primary">Our Crew</span>
+                <span className="text-primary italic">Our Crew</span>
             </h1>
 
-            <p className="text-muted-foreground text-base sm:text-lg md:text-xl max-w-xl mb-10">
-                Upload, listen and relive the funniest moments from your people. Pure gold, forever saved.
+            <p className="text-muted-foreground text-sm sm:text-lg md:text-xl max-w-[280px] xs:max-w-md sm:max-w-xl mb-12 leading-relaxed px-2">
+                Upload, listen and relive the funniest moments from your crew. Pure gold, forever saved.
             </p>
 
             {/* CTAs */}

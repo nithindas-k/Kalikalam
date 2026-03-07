@@ -26,21 +26,21 @@ export default function Navbar({ onAddClick }: NavbarProps) {
                     </Link>
 
                     {/* Nav actions */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 sm:gap-3">
                         {!isAudiosPage && (
                             <Link to={ROUTES.AUDIOS}>
-                                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                                <Button variant="ghost" size="sm" className="px-2 h-9 text-xs sm:text-sm text-muted-foreground hover:text-foreground">
                                     Clips
                                 </Button>
                             </Link>
                         )}
                         <Button
                             size="sm"
-                            className="gap-1.5 font-semibold"
+                            className="h-9 px-3 gap-1 sm:gap-1.5 font-semibold"
                             onClick={onAddClick}
                         >
-                            <Plus className="w-4 h-4" />
-                            <span className="hidden sm:inline">Add Clip</span>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span className="hidden xs:inline">Add Clip</span>
                         </Button>
                     </div>
                 </div>
