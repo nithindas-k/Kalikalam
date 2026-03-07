@@ -4,5 +4,6 @@ export interface AudioResponseDTO {
     imageUrl: string;
     audioUrl: string;
     creatorId: string;
+    isPrivate: boolean;
     createdAt: string;
 }

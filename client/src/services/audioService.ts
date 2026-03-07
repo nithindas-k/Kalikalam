@@ -33,6 +33,10 @@ export const audioService = {
         form.append("name", payload.name);
         form.append("image", payload.image);
         form.append("audio", payload.audio);
+        if (payload.isPrivate) {
+            form.append("isPrivate", "true");
+            if (payload.accessKey) form.append("accessKey", payload.accessKey);
+        }
         const res = await api.post<ApiResponse<AudioItem>>("/audios", form);
         return res.data.data;
     },
@@ -48,5 +52,14 @@ export const audioService = {
 
     delete: async (id: string): Promise<void> => {
         await api.delete(`/audios/${id}`);
+    },
+
+    unlock: async (id: string, key: string): Promise<boolean> => {
+        try {
+            await api.post(`/audios/${id}/unlock`, { key });
+            return true;
+        } catch {
+            return false;
+        }
     },
 };

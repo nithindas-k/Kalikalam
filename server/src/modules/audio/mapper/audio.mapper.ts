@@ -9,6 +9,7 @@ export class AudioMapper {
             imageUrl: doc.imageUrl,
             audioUrl: doc.audioUrl,
             creatorId: doc.creatorId || "",
+            isPrivate: doc.isPrivate,
             createdAt: doc.createdAt.toISOString(),
         };
     }

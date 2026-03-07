@@ -49,10 +49,28 @@ export class AudioController implements IAudioController {
                 audioUrl: files["audio"][0].path,
                 audioPublicId: files["audio"][0].filename,
                 creatorId: creatorId,
+                isPrivate: req.body.isPrivate === "true",
+                accessKey: req.body.accessKey,
             };
 
             const data = await this.service.createAudio(dto);
             res.status(201).json(successResponse(MESSAGES.AUDIO_CREATED, data));
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async verifyKey(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { id } = req.params;
+            const { key } = req.body;
+            const isValid = await this.service.verifyKey(id, key);
+
+            if (isValid) {
+                res.status(200).json(successResponse("Key verified successfully", { unlocked: true }));
+            } else {
+                res.status(403).json({ success: false, message: "Invalid access key" });
+            }
         } catch (error) {
             next(error);
         }

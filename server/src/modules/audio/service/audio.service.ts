@@ -63,4 +63,12 @@ export class AudioService implements IAudioService {
 
         await this.repo.delete(id);
     }
+
+    async verifyKey(id: string, key: string): Promise<boolean> {
+        const doc = await this.repo.findById(id);
+        if (!doc) throw Object.assign(new Error(MESSAGES.AUDIO_NOT_FOUND), { status: 404 });
+
+        if (!doc.isPrivate) return true; // Public is always "verified"
+        return doc.accessKey === key;
+    }
 }

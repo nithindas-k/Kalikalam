@@ -8,4 +8,5 @@ export interface IAudioService {
     createAudio(dto: CreateAudioDTO): Promise<AudioResponseDTO>;
     updateAudio(id: string, dto: UpdateAudioDTO, creatorId: string): Promise<AudioResponseDTO>;
     deleteAudio(id: string, creatorId: string): Promise<void>;
+    verifyKey(id: string, key: string): Promise<boolean>;
 }

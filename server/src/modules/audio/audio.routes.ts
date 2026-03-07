@@ -13,6 +13,7 @@ const audioController = new AudioController(audioService);
 
 router.get("/", (req, res, next) => audioController.getAll(req, res, next));
 router.get("/:id", (req, res, next) => audioController.getById(req, res, next));
+router.post("/:id/unlock", (req, res, next) => audioController.verifyKey(req, res, next));
 router.post("/", upload, (req, res, next) => audioController.create(req, res, next));
 router.put("/:id", upload, (req, res, next) => audioController.update(req, res, next));
 router.delete("/:id", (req, res, next) => audioController.delete(req, res, next));

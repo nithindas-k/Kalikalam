@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ImagePlus, Music, Upload, Loader2, Check, RefreshCw } from "lucide-react";
+import { ImagePlus, Music, Upload, Loader2, Check, RefreshCw, Lock, Unlock, Copy, Key } from "lucide-react";
 import Cropper from "react-easy-crop";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,21 +8,25 @@ import { Label } from "@/components/ui/label";
 import { MESSAGES } from "@/constants/messages";
 import type { AudioItem } from "@/types/audio.types";
 import getCroppedImg from "@/lib/cropUtils";
+import { toast } from "sonner";
 
 interface AudioFormProps {
     initialData?: AudioItem;
-    onSubmit: (name: string, image: File | null, audio: File | null) => Promise<boolean>;
+    onSubmit: (name: string, image: File | null, audio: File | null, isPrivate: boolean, accessKey: string) => Promise<boolean>;
     onCancel: () => void;
 }
 
 export default function AudioForm({ initialData, onSubmit, onCancel }: AudioFormProps) {
     const [name, setName] = useState(initialData?.name ?? "");
+    const [isPrivate, setIsPrivate] = useState(initialData?.isPrivate ?? false);
+    const [accessKey, setAccessKey] = useState("");
     const [image, setImage] = useState<File | null>(null);
     const [audio, setAudio] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>(initialData?.imageUrl ?? "");
     const [audioName, setAudioName] = useState<string>("");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     // Cropper states
     const [tempImage, setTempImage] = useState<string | null>(null);
@@ -35,14 +39,28 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
 
     const isEdit = !!initialData;
 
+    // Generate key on mount or when switched to private
+    useEffect(() => {
+        if (isPrivate && !accessKey) {
+            const newKey = Math.random().toString(36).substring(2, 8).toUpperCase();
+            setAccessKey(newKey);
+        }
+    }, [isPrivate, accessKey]);
+
     useEffect(() => {
         return () => {
             if (imagePreview && !initialData?.imageUrl) {
                 URL.revokeObjectURL(imagePreview);
             }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [imagePreview, initialData?.imageUrl]);
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(accessKey);
+        setCopied(true);
+        toast.success("Key copied to clipboard!");
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
@@ -101,9 +119,15 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
-        const success = await onSubmit(name.trim(), image, audio);
+        const success = await onSubmit(name.trim(), image, audio, isPrivate, accessKey);
         setLoading(false);
-        if (success) onCancel();
+        if (success) {
+            if (isPrivate) {
+                // Keep modal open briefly to show the key if private upload? 
+                // Actually, toast already copied it. Let's close it as normal.
+            }
+            onCancel();
+        }
     };
 
     if (tempImage) {
@@ -177,6 +201,65 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
                 />
                 {errors.name && <p className="text-[10px] text-destructive">{errors.name}</p>}
             </div>
+
+            {/* Visibility Toggle */}
+            {!isEdit && (
+                <div className="space-y-2.5">
+                    <Label className="text-xs sm:text-sm">Visibility Settings</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button
+                            type="button"
+                            variant={!isPrivate ? "default" : "outline"}
+                            className={cn(
+                                "h-11 flex-col items-center justify-center gap-1 rounded-xl border-border/50 px-3",
+                                !isPrivate ? "bg-primary text-black shadow-lg" : "text-muted-foreground"
+                            )}
+                            onClick={() => setIsPrivate(false)}
+                        >
+                            <Unlock className="h-4 w-4" />
+                            <span className="text-[10px] font-bold">Public Content</span>
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={isPrivate ? "default" : "outline"}
+                            className={cn(
+                                "h-11 flex-col items-center justify-center gap-1 rounded-xl border-border/50 px-3",
+                                isPrivate ? "bg-primary text-black shadow-lg" : "text-muted-foreground"
+                            )}
+                            onClick={() => setIsPrivate(true)}
+                        >
+                            <Lock className="h-4 w-4" />
+                            <span className="text-[10px] font-bold">Private Content</span>
+                        </Button>
+                    </div>
+
+                    {isPrivate && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="relative rounded-xl border border-primary/20 bg-primary/5 p-3">
+                                <p className="mb-2 text-[10px] font-medium text-primary uppercase tracking-tight">Access Key (Required to Unlock)</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex h-10 flex-1 items-center gap-3 rounded-lg bg-black/40 px-3 border border-white/10">
+                                        <Key className="h-4 w-4 text-primary" />
+                                        <span className="text-sm font-black tracking-widest text-primary font-mono">{accessKey}</span>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="outline"
+                                        className="h-10 w-10 border-white/10 bg-black/40 hover:bg-black/60 active:scale-90"
+                                        onClick={copyToClipboard}
+                                    >
+                                        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                    </Button>
+                                </div>
+                                <p className="mt-2 text-[9px] text-muted-foreground italic flex items-center gap-1">
+                                    <Check className="h-3 w-3 text-primary" /> Share this key with people who should see this clip.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Image */}
             <div className="space-y-1.5">

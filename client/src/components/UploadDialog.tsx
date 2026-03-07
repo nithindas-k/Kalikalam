@@ -13,7 +13,7 @@ interface UploadDialogProps {
     mode: "add" | "edit";
     audio?: AudioItem;
     onClose: () => void;
-    onSubmit: (name: string, image: File | null, audio: File | null) => Promise<boolean>;
+    onSubmit: (name: string, image: File | null, audio: File | null, isPrivate: boolean, accessKey: string) => Promise<boolean>;
 }
 
 export default function UploadDialog({ open, mode, audio, onClose, onSubmit }: UploadDialogProps) {

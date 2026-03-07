@@ -21,14 +21,14 @@ export default function AudiosPage() {
     const [isPaused, setIsPaused] = useState(false);
 
     // Add
-    const handleAddSubmit = async (name: string, image: File | null, audio: File | null): Promise<boolean> => {
+    const handleAddSubmit = async (name: string, image: File | null, audio: File | null, isPrivate: boolean, accessKey: string): Promise<boolean> => {
         if (!image || !audio) return false;
-        const payload: CreateAudioPayload = { name, image, audio };
+        const payload: CreateAudioPayload = { name, image, audio, isPrivate, accessKey };
         return addAudio(payload);
     };
 
     // Edit
-    const handleEditSubmit = async (name: string, image: File | null, audio: File | null): Promise<boolean> => {
+    const handleEditSubmit = async (name: string, image: File | null, audio: File | null, _isPrivate: boolean, _accessKey: string): Promise<boolean> => {
         if (!editAudioItem) return false;
         const payload: UpdateAudioPayload = { name };
         if (image) payload.image = image;

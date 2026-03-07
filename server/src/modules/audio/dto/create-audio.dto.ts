@@ -5,4 +5,6 @@ export interface CreateAudioDTO {
     audioUrl: string;
     audioPublicId: string;
     creatorId: string;
+    isPrivate: boolean;
+    accessKey?: string;
 }
