@@ -80,7 +80,7 @@ export default function AudiosPage() {
                     >
                         <RefreshCw className="w-4 h-4" />
                     </Button>
-                    <Button onClick={() => setUploadOpen(true)} className="h-9 px-3 sm:px-4 gap-2 font-bold orange-glow-sm">
+                    <Button onClick={() => setUploadOpen(true)} className="h-9 px-3 sm:px-4 gap-2 font-bold transition-transform active:scale-95">
                         <Plus className="w-4 h-4" />
                         <span className="hidden xs:inline">Add</span>
                     </Button>

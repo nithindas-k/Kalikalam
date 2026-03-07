@@ -1,4 +1,4 @@
-import { ArrowDown, Mic2, Play } from "lucide-react";
+import { Mic2, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
@@ -22,7 +22,7 @@ export default function HeroSection({ onAddClick }: HeroSectionProps) {
             <h1 className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter mb-6 leading-[1.1] sm:leading-tight">
                 The Laughs of
                 <br />
-                <span className="text-primary italic">Our Crew</span>
+                <span className="text-primary">Our Crew</span>
             </h1>
 
             <p className="text-muted-foreground text-sm sm:text-lg md:text-xl max-w-[280px] xs:max-w-md sm:max-w-xl mb-12 leading-relaxed px-2">
@@ -42,17 +42,11 @@ export default function HeroSection({ onAddClick }: HeroSectionProps) {
                 <Button
                     size="lg"
                     variant="outline"
-                    className="w-full sm:w-auto gap-2 font-semibold text-base px-8 border-primary/40 hover:border-primary"
+                    className="w-full sm:w-auto gap-2 font-semibold text-base px-8 border-primary/40 hover:border-primary transition-transform active:scale-95"
                     onClick={onAddClick}
                 >
                     + Add a Clip
                 </Button>
-            </div>
-
-            {/* Scroll hint */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-muted-foreground animate-bounce">
-                <span className="text-xs tracking-widest uppercase">Scroll</span>
-                <ArrowDown className="w-4 h-4" />
             </div>
         </section>
     );
