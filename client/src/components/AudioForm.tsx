@@ -1,11 +1,13 @@
-import { useState, useRef, useEffect } from "react";
-import { ImagePlus, Music, Upload, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { ImagePlus, Music, Upload, Loader2, Check, RefreshCw } from "lucide-react";
+import Cropper from "react-easy-crop";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MESSAGES } from "@/constants/messages";
 import type { AudioItem } from "@/types/audio.types";
+import getCroppedImg from "@/lib/cropUtils";
 
 interface AudioFormProps {
     initialData?: AudioItem;
@@ -21,6 +23,12 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
     const [audioName, setAudioName] = useState<string>("");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
+
+    // Cropper states
+    const [tempImage, setTempImage] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
     const imageRef = useRef<HTMLInputElement>(null);
     const audioRef = useRef<HTMLInputElement>(null);
@@ -48,9 +56,35 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setImage(file);
-            setImagePreview(URL.createObjectURL(file));
-            setErrors((prev) => ({ ...prev, image: "" }));
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                setTempImage(reader.result as string);
+            };
+        }
+    };
+
+    const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    }, []);
+
+    const handleCropSave = async () => {
+        if (tempImage && croppedAreaPixels) {
+            try {
+                const croppedBlob = await getCroppedImg(tempImage, croppedAreaPixels);
+                if (croppedBlob) {
+                    const croppedFile = new File([croppedBlob], "cropped-image.jpg", { type: "image/jpeg" });
+                    setImage(croppedFile);
+                    if (imagePreview && !initialData?.imageUrl) {
+                        URL.revokeObjectURL(imagePreview);
+                    }
+                    setImagePreview(URL.createObjectURL(croppedFile));
+                    setTempImage(null);
+                    setErrors((prev) => ({ ...prev, image: "" }));
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
     };
 
@@ -71,6 +105,60 @@ export default function AudioForm({ initialData, onSubmit, onCancel }: AudioForm
         setLoading(false);
         if (success) onCancel();
     };
+
+    if (tempImage) {
+        return (
+            <div className="flex flex-col gap-4">
+                <div className="relative w-full h-64 sm:h-80 bg-black rounded-xl overflow-hidden shadow-inner border border-border/50">
+                    <Cropper
+                        image={tempImage}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={1}
+                        onCropChange={setCrop}
+                        onZoomChange={setZoom}
+                        onCropComplete={onCropComplete}
+                    />
+                </div>
+
+                <div className="space-y-4">
+                    <div className="space-y-1.5 px-1">
+                        <Label className="text-xs text-muted-foreground">Zoom: {Math.round(zoom * 100)}%</Label>
+                        <input
+                            type="range"
+                            value={zoom}
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            aria-labelledby="Zoom"
+                            onChange={(e) => setZoom(Number(e.target.value))}
+                            className="orange-range"
+                        />
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="flex-1 gap-2 h-10 text-sm font-medium"
+                            onClick={() => setTempImage(null)}
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            className="flex-1 gap-2 h-10 text-sm font-bold"
+                            onClick={handleCropSave}
+                        >
+                            <Check className="w-4 h-4" />
+                            Use Photo
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
