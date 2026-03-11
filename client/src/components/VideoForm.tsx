@@ -90,11 +90,27 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
         }
     };
 
+    const handleTimeUpdate = () => {
+        if (videoRef.current) {
+            // Real-world behavior: If the video reaches the end of the trimmed part, loop back to start of trim
+            if (videoRef.current.currentTime >= endTime) {
+                videoRef.current.currentTime = startTime;
+            }
+            if (videoRef.current.currentTime < startTime) {
+                videoRef.current.currentTime = startTime;
+            }
+        }
+    };
+
     const handleSliderChange = (values: number[]) => {
         setStartTime(values[0]);
         setEndTime(values[1]);
         if (videoRef.current) {
+            // Jump to start of trim on change for immediate preview
             videoRef.current.currentTime = values[0];
+            if (videoRef.current.paused) {
+                videoRef.current.play().catch(() => { });
+            }
         }
     };
 
@@ -227,6 +243,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                 ref={videoRef}
                                 src={videoPreviewUrl}
                                 onLoadedMetadata={handleLoadedMetadata}
+                                onTimeUpdate={handleTimeUpdate}
                                 controls
                                 className="w-full h-auto max-h-[50vh] object-contain"
                             />
