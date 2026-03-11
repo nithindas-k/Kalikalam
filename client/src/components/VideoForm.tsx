@@ -248,13 +248,23 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                 ) : (
                     <div className="space-y-4">
                         <div className="rounded-xl overflow-hidden bg-black aspect-video relative border border-white/5">
+                            {/* Background Blur Layer */}
+                            <div className="absolute inset-0 h-full w-full overflow-hidden">
+                                <video
+                                    src={videoPreviewUrl}
+                                    className="h-full w-full object-cover opacity-30 blur-md scale-110"
+                                    muted
+                                />
+                            </div>
+
+                            {/* Sharp Preview Video */}
                             <video
                                 ref={videoRef}
                                 src={videoPreviewUrl}
                                 onLoadedMetadata={handleLoadedMetadata}
                                 onTimeUpdate={handleTimeUpdate}
                                 controls
-                                className="w-full h-full object-cover"
+                                className="relative w-full h-full object-contain"
                             />
                         </div>
 

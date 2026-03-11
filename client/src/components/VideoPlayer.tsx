@@ -64,13 +64,21 @@ export default function VideoPlayer({ video, isPaused, onTogglePause, onClose }:
             <div className="flex flex-col sm:flex-row items-center justify-between w-full h-auto p-4 gap-4 max-w-7xl mx-auto">
                 <div className="w-full sm:w-1/3 flex items-center justify-center p-1 bg-black/20 rounded-xl">
                     <div className="relative aspect-video w-full overflow-hidden rounded-lg shadow-2xl border border-white/5 bg-black/40">
+                        {/* Background Blur Layer */}
+                        <img
+                            src={video.thumbnailUrl || video.videoUrl}
+                            alt=""
+                            className="absolute inset-0 h-full w-full object-cover opacity-30 blur-md scale-110"
+                        />
+
+                        {/* Sharp Foreground Video */}
                         <video
                             ref={videoRef}
                             src={video.videoUrl}
                             onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
                             onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
                             onEnded={onTogglePause}
-                            className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-700"
+                            className="relative w-full h-full object-contain cursor-pointer transition-all duration-700"
                             onClick={onTogglePause}
                             poster={video.thumbnailUrl}
                         />
