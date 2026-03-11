@@ -35,7 +35,6 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
     const [accessKeyInput, setAccessKeyInput] = useState("");
     const [isLocalUnlocked, setIsLocalUnlocked] = useState(getUnlockedIds().includes(video.id));
     const [shake, setShake] = useState(false);
-
     const [isHovering, setIsHovering] = useState(false);
 
     const isOwner = video.creatorId === getDeviceId();
@@ -92,8 +91,8 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
                         loop
                         playsInline
                         className={cn(
-                            "absolute inset-0 h-full w-full object-contain transition-opacity duration-500 bg-black/60",
-                            isHovering ? "opacity-100" : "opacity-0"
+                            "absolute inset-0 h-full w-full object-cover transition-opacity duration-700 pointer-events-none",
+                            isHovering ? "opacity-100 scale-105" : "opacity-0 scale-100"
                         )}
                         ref={(el) => {
                             if (el) {
@@ -107,17 +106,20 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
                     />
                 )}
 
+                {/* Gradient Overlay for better contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
                 {/* Status Badge */}
                 {!isLocked && (
-                    <div className="absolute left-2 top-2 flex flex-col gap-1.5 z-10">
+                    <div className="absolute left-3 top-3 flex flex-col gap-1.5 z-10">
                         {isPlaying && (
-                            <Badge variant="default" className="bg-primary text-black font-extrabold animate-pulse px-2 py-0.5 shadow-lg shadow-primary/20">
+                            <Badge variant="default" className="bg-primary text-black font-black animate-pulse px-2 py-0.5 shadow-lg shadow-primary/40 border-none text-[9px] uppercase tracking-wider">
                                 Playing
                             </Badge>
                         )}
                         {video.isPrivate && (
-                            <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-white border-white/20 gap-1 px-2 py-0.5 capitalize shadow-lg">
-                                <Unlock className="h-3 w-3" />
+                            <Badge variant="secondary" className="bg-black/40 backdrop-blur-xl text-white border-white/10 gap-1 px-2 py-0.5 capitalize shadow-xl text-[9px] font-bold">
+                                <Unlock className="h-2.5 w-2.5" />
                                 Private
                             </Badge>
                         )}
@@ -125,20 +127,22 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
                 )}
 
                 {/* Play Overlay (Only if not locked) */}
-                {!isLocked ? (
+                {!isLocked && (
                     <div className={cn(
-                        "absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300",
+                        "absolute inset-0 flex items-center justify-center bg-black/10 backdrop-sm transition-opacity duration-300",
                         isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     )}>
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-black shadow-lg shadow-primary/30 transition-transform active:scale-90">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/95 text-black shadow-2xl shadow-primary/40 transition-all active:scale-90 hover:scale-110">
                             {isPlaying ? (
-                                <Pause className="h-6 w-6 fill-black" />
+                                <Pause className="h-5 w-5 fill-black" />
                             ) : (
-                                <Play className="ml-1 h-6 w-6 fill-black" />
+                                <Play className="ml-1 h-5 w-5 fill-black" />
                             )}
                         </div>
                     </div>
-                ) : (
+                )}
+
+                {isLocked && (
                     /* Locked UI - Premium Redesign */
                     <div className={cn(
                         "absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-5 text-center transition-all duration-500",
