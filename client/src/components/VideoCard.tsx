@@ -68,7 +68,7 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
         >
             {/* Thumbnail Area */}
             <div
-                className="relative w-full cursor-pointer overflow-hidden bg-black/40"
+                className="relative aspect-video w-full cursor-pointer overflow-hidden bg-black"
                 onClick={() => !isLocked && onPlay(video)}
             >
                 {/* Regular Thumbnail */}
@@ -76,8 +76,8 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
                     src={video.thumbnailUrl || video.videoUrl}
                     alt={video.name}
                     className={cn(
-                        "w-full h-auto transition-all duration-700 ease-in-out",
-                        !isLocked && "group-hover:scale-105",
+                        "h-full w-full object-cover transition-all duration-700 ease-in-out",
+                        !isLocked && "group-hover:scale-110",
                         isLocked && "blur-xl scale-110 opacity-70"
                     )}
                     loading="lazy"
@@ -92,7 +92,7 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
                         playsInline
                         className={cn(
                             "absolute inset-0 h-full w-full object-cover transition-opacity duration-700 pointer-events-none",
-                            isHovering ? "opacity-100 scale-105" : "opacity-0 scale-100"
+                            isHovering ? "opacity-100 scale-110" : "opacity-0 scale-100"
                         )}
                         ref={(el) => {
                             if (el) {
