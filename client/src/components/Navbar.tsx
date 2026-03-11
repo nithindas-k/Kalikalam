@@ -9,7 +9,6 @@ interface NavbarProps {
 
 export default function Navbar({ onAddClick }: NavbarProps) {
     const location = useLocation();
-    const isAudiosPage = location.pathname === ROUTES.AUDIOS;
 
     return (
         <nav className="glass sticky top-0 z-50 w-full">
@@ -27,10 +26,17 @@ export default function Navbar({ onAddClick }: NavbarProps) {
 
                     {/* Nav actions */}
                     <div className="flex items-center gap-1.5 sm:gap-3">
-                        {!isAudiosPage && (
+                        {location.pathname !== ROUTES.AUDIOS && (
                             <Link to={ROUTES.AUDIOS}>
                                 <Button variant="ghost" size="sm" className="px-2 h-9 text-xs sm:text-sm text-muted-foreground hover:text-foreground">
-                                    Clips
+                                    Audios
+                                </Button>
+                            </Link>
+                        )}
+                        {location.pathname !== ROUTES.VIDEOS && (
+                            <Link to={ROUTES.VIDEOS}>
+                                <Button variant="ghost" size="sm" className="px-2 h-9 text-xs sm:text-sm text-muted-foreground hover:text-foreground">
+                                    Videos
                                 </Button>
                             </Link>
                         )}

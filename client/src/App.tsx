@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import LandingPage from "@/pages/LandingPage";
 import AudiosPage from "@/pages/AudiosPage";
+import VideosPage from "@/pages/VideosPage";
 import { ROUTES } from "@/constants/routes";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
       <Routes>
         <Route path={ROUTES.HOME} element={<LandingPage />} />
         <Route path={ROUTES.AUDIOS} element={<AudiosPage />} />
+        <Route path={ROUTES.VIDEOS} element={<VideosPage />} />
         <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
       </Routes>
     </BrowserRouter>

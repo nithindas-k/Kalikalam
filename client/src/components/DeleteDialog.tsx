@@ -11,11 +11,10 @@ import {
     AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { MESSAGES } from "@/constants/messages";
-import type { AudioItem } from "@/types/audio.types";
 
 interface DeleteDialogProps {
     open: boolean;
-    audio: AudioItem | null;
+    audio: { id: string, name: string } | null;
     onClose: () => void;
     onConfirm: (id: string) => Promise<boolean>;
 }
