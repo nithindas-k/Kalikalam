@@ -14,7 +14,7 @@ export default function UploadVideoDialog({ open, onClose, onSubmit, video }: Up
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 w-[95vw] rounded-2xl mx-auto shadow-2xl border-border/50">
+            <DialogContent className="sm:max-w-lg md:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-8 w-[95vw] rounded-[2rem] mx-auto shadow-2xl border-white/5 bg-[#0a0a0a]">
                 <DialogHeader className="mb-4 sm:mb-6 flex flex-col items-center text-center space-y-3">
                     <div>
                         <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight">

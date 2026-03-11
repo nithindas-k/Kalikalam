@@ -213,7 +213,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
             <canvas ref={canvasRef} className="hidden" />
 
             {cropImage && (
@@ -228,66 +228,71 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column - Details */}
-                <div className="space-y-5">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="name" className="text-xs sm:text-sm font-bold">Video Title</Label>
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Video Title</Label>
                         <Input
                             id="name"
-                            placeholder="e.g. Awesome Video Clip"
+                            placeholder="Give your masterpiece a name..."
                             value={name}
                             onChange={(e) => {
                                 setName(e.target.value);
                                 setErrors((prev) => ({ ...prev, name: "" }));
                             }}
-                            className={cn("h-10 text-sm bg-black/20 border-white/10", errors.name ? "border-destructive" : "")}
+                            className={cn(
+                                "h-12 text-sm bg-secondary/20 border-white/5 focus:border-primary/50 transition-all rounded-xl",
+                                errors.name ? "border-destructive/50" : ""
+                            )}
                         />
-                        {errors.name && <p className="text-[10px] text-destructive">{errors.name}</p>}
+                        {errors.name && <p className="text-[10px] text-destructive ml-1">{errors.name}</p>}
                     </div>
 
                     <div className="space-y-3">
-                        <Label className="text-xs sm:text-sm font-bold text-foreground">Content Visibility</Label>
-                        <div className="flex p-1 bg-secondary/30 rounded-2xl border border-white/5">
+                        <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Content Visibility</Label>
+                        <div className="flex p-1.5 bg-black/40 rounded-2xl border border-white/5 backdrop-blur-sm">
                             <button
                                 type="button"
                                 className={cn(
-                                    "flex-1 flex items-center justify-center gap-2 h-10 rounded-xl transition-all duration-300",
-                                    !isPrivate ? "bg-primary text-black shadow-lg font-bold" : "text-muted-foreground hover:text-foreground"
+                                    "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all duration-300",
+                                    !isPrivate ? "bg-primary text-black shadow-[0_0_15px_rgba(var(--primary),0.3)] font-black" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                                 )}
                                 onClick={() => setIsPrivate(false)}
                             >
                                 <Unlock className="h-4 w-4" />
-                                <span className="text-xs">Public</span>
+                                <span className="text-[10px] uppercase tracking-widest">Public</span>
                             </button>
                             <button
                                 type="button"
                                 className={cn(
-                                    "flex-1 flex items-center justify-center gap-2 h-10 rounded-xl transition-all duration-300",
-                                    isPrivate ? "bg-primary text-black shadow-lg font-bold" : "text-muted-foreground hover:text-foreground"
+                                    "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all duration-300",
+                                    isPrivate ? "bg-primary text-black shadow-[0_0_15px_rgba(var(--primary),0.3)] font-black" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                                 )}
                                 onClick={() => setIsPrivate(true)}
                             >
                                 <Lock className="h-4 w-4" />
-                                <span className="text-xs">Private</span>
+                                <span className="text-[10px] uppercase tracking-widest">Private</span>
                             </button>
                         </div>
 
                         {isPrivate && (
                             <div className="animate-in fade-in slide-in-from-top-2 duration-500">
-                                <div className="relative rounded-2xl border border-primary/20 bg-primary/5 p-4 overflow-hidden">
-                                    <p className="mb-2 text-[10px] font-black text-primary uppercase tracking-widest">Access Key</p>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex h-11 flex-1 items-center gap-3 rounded-xl bg-black/40 px-3 border border-white/10">
+                                <div className="relative rounded-2xl border border-primary/20 bg-primary/5 p-4 overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-100 transition-opacity">
+                                        <Lock className="w-8 h-8 text-primary" />
+                                    </div>
+                                    <p className="mb-2 text-[10px] font-black text-primary/70 uppercase tracking-widest">Secret Access Key</p>
+                                    <div className="flex items-center gap-2 relative z-10">
+                                        <div className="flex h-12 flex-1 items-center gap-3 rounded-xl bg-black/60 px-4 border border-white/10">
                                             <Key className="h-4 w-4 text-primary" />
                                             <span className="text-sm font-black tracking-widest text-primary font-mono">{accessKey}</span>
                                         </div>
                                         <Button
                                             type="button"
                                             size="icon"
-                                            variant="outline"
-                                            className="h-11 w-11 border-white/10 bg-black/40"
+                                            className="h-12 w-12 border-white/10 bg-black/60 hover:bg-primary hover:text-black transition-all rounded-xl"
                                             onClick={copyToClipboard}
                                         >
-                                            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                         </Button>
                                     </div>
                                 </div>
@@ -297,39 +302,45 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
                     {/* Manual Thumbnail Upload */}
                     <div className="space-y-3">
-                        <Label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                        <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
                             Cover Picture
                             {thumbnailPreviewUrl && (
                                 <button
                                     type="button"
                                     onClick={() => setCropImage(thumbnailPreviewUrl)}
-                                    className="text-[10px] text-primary hover:underline flex items-center gap-1"
+                                    className="text-[10px] text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
                                 >
                                     <Crop className="w-3 h-3" />
-                                    Adjust Crop
+                                    Edit Crop
                                 </button>
                             )}
                         </Label>
                         <div
                             className={cn(
-                                "relative group cursor-pointer aspect-video rounded-xl overflow-hidden border-2 border-dashed transition-all hover:bg-secondary/10",
-                                thumbnailPreviewUrl ? "border-primary/30" : "border-white/10 h-40 flex flex-col items-center justify-center"
+                                "relative group cursor-pointer aspect-video rounded-2xl overflow-hidden border-2 border-dashed transition-all duration-300",
+                                thumbnailPreviewUrl
+                                    ? "border-primary/20 hover:border-primary/40"
+                                    : "border-white/10 hover:border-primary/40 bg-black/40 flex flex-col items-center justify-center"
                             )}
                             onClick={() => thumbInputRef.current?.click()}
                         >
                             {thumbnailPreviewUrl ? (
                                 <>
-                                    <img src={thumbnailPreviewUrl} className="w-full h-full object-cover" alt="Thumbnail Preview" />
-                                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <ImageIcon className="w-8 h-8 mb-2 text-primary" />
-                                        <span className="text-xs font-bold uppercase tracking-widest text-white">Change Cover</span>
+                                    <img src={thumbnailPreviewUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Thumbnail Preview" />
+                                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-3 scale-90 group-hover:scale-100 transition-transform">
+                                            <ImageIcon className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white">Change Cover</span>
                                     </div>
                                 </>
                             ) : (
                                 <>
-                                    <ImageIcon className="w-6 h-6 mb-2 text-muted-foreground" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Upload Cover</span>
-                                    <span className="text-[10px] text-muted-foreground mt-1 text-center px-4 italic">(Or capture one from the video on the right)</span>
+                                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:bg-primary/10 transition-colors">
+                                        <ImageIcon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">Upload Cover</span>
+                                    <span className="text-[8px] text-muted-foreground/60 mt-2 text-center px-6 italic">Capture from video or upload custom</span>
                                 </>
                             )}
                         </div>
@@ -345,23 +356,34 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
                 {/* Right Column - Video Player & Trim */}
                 <div className="space-y-4">
-                    <Label className="text-xs sm:text-sm font-bold">Video & Frame Capture</Label>
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Video Source</Label>
                     {!videoPreviewUrl ? (
                         <div
                             className={cn(
-                                "flex flex-col items-center justify-center h-full min-h-[12rem] border-2 border-dashed rounded-xl cursor-pointer transition-colors hover:border-primary/60 bg-black/20",
-                                errors.video ? "border-destructive/60" : "border-white/10"
+                                "relative group flex flex-col items-center justify-center aspect-video border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-300",
+                                errors.video
+                                    ? "border-destructive/40 bg-destructive/5"
+                                    : "border-white/10 bg-black/40 hover:border-primary/40 hover:bg-secondary/5"
                             )}
                             onClick={() => inputRef.current?.click()}
                         >
-                            <VideoIcon className="w-8 h-8 mb-2 text-muted-foreground" />
-                            <span className="text-xs font-bold uppercase tracking-widest">Select Video File</span>
+                            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors">
+                                <VideoIcon className="w-7 h-7 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground">Select Video File</span>
+                            <span className="text-[8px] text-muted-foreground/60 mt-2 font-medium">MP4, WebM or OGG supported</span>
+
+                            {errors.video && (
+                                <div className="absolute bottom-4 left-0 right-0 text-center">
+                                    <span className="text-[8px] font-black uppercase text-destructive tracking-widest leading-none bg-destructive/10 px-2 py-1 rounded-full">{errors.video}</span>
+                                </div>
+                            )}
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            <div className="rounded-xl overflow-hidden bg-black aspect-video relative border border-white/5 ring-1 ring-white/10 group/player">
-                                <div className="absolute inset-0 h-full w-full overflow-hidden">
-                                    <video src={videoPreviewUrl} className="h-full w-full object-cover opacity-30 blur-md scale-110" muted />
+                        <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="rounded-2xl overflow-hidden bg-black aspect-video relative border border-white/10 shadow-2xl group/player ring-1 ring-white/5">
+                                <div className="absolute inset-0 h-full w-full overflow-hidden pointer-events-none">
+                                    <video src={videoPreviewUrl} className="h-full w-full object-cover opacity-20 blur-2xl scale-125" muted />
                                 </div>
                                 <video
                                     ref={videoRef}
@@ -369,62 +391,75 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                     onLoadedMetadata={handleLoadedMetadata}
                                     onTimeUpdate={handleTimeUpdate}
                                     controls
-                                    className="relative w-full h-full object-contain"
+                                    className="relative w-full h-full object-contain z-10"
                                 />
 
-                                <div className="absolute top-3 right-3 opacity-0 group-hover/player:opacity-100 transition-opacity">
+                                <div className="absolute top-4 right-4 opacity-0 group-hover/player:opacity-100 transition-all duration-300 translate-y-1 group-hover/player:translate-y-0 z-20">
                                     <Button
                                         type="button"
                                         size="sm"
-                                        className="h-8 bg-black/60 backdrop-blur-md border border-white/10 text-white hover:bg-primary hover:text-black gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg"
+                                        className="h-10 px-4 bg-black/70 backdrop-blur-xl border border-white/10 text-white hover:bg-primary hover:text-black gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl shadow-2xl"
                                         onClick={captureThumbnail}
                                     >
-                                        <Camera className="w-3.5 h-3.5" />
-                                        Capture Frame
+                                        <Camera className="w-4 h-4" />
+                                        Snap Frame
                                     </Button>
                                 </div>
                             </div>
 
                             {duration > 0 && videoFile && (
-                                <div className="bg-secondary/20 p-4 rounded-xl space-y-4 border border-white/5">
-                                    <div className="flex items-center justify-between text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-                                        <span className="flex items-center gap-2">
-                                            <Scissors className="w-3.5 h-3.5" />
-                                            TRIM SELECTION
-                                        </span>
-                                        <span className="text-muted-foreground">{formatTime(endTime - startTime)}</span>
+                                <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl space-y-5 border border-white/5 shadow-inner">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                <Scissors className="w-3.5 h-3.5 text-primary" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-foreground uppercase tracking-widest">TIMELINE TRIM</span>
+                                        </div>
+                                        <div className="bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
+                                            <span className="text-[10px] font-mono font-bold text-primary tracking-tighter">{formatTime(endTime - startTime)} selected</span>
+                                        </div>
                                     </div>
-                                    <Slider
-                                        value={[startTime, endTime]}
-                                        max={duration}
-                                        step={0.1}
-                                        onValueChange={handleSliderChange}
-                                        className="pt-1 pb-1"
-                                    />
-                                    <div className="flex justify-between text-[8px] font-bold text-muted-foreground">
-                                        <span>{formatTime(startTime)}</span>
-                                        <span>{formatTime(endTime)}</span>
+
+                                    <div className="px-1">
+                                        <Slider
+                                            value={[startTime, endTime]}
+                                            max={duration}
+                                            step={0.1}
+                                            onValueChange={handleSliderChange}
+                                            className="pt-1 pb-1"
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-between text-[9px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="opacity-50">Start</span>
+                                            <span className="text-foreground">{formatTime(startTime)}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 text-right">
+                                            <span className="opacity-50">End</span>
+                                            <span className="text-foreground">{formatTime(endTime)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
 
-                            <div className="flex justify-between items-center gap-3">
+                            <div className="flex gap-3">
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    size="sm"
-                                    className="flex-1 h-9 text-[10px] rounded-xl border-dashed border-white/20 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest"
+                                    className="flex-1 h-12 text-[10px] rounded-xl border-white/10 hover:border-primary/30 hover:bg-primary/5 transition-all font-black uppercase tracking-widest bg-black/20"
                                     onClick={() => inputRef.current?.click()}
                                 >
-                                    Change Video
+                                    Swap Video
                                 </Button>
                                 <Button
                                     type="button"
-                                    size="sm"
-                                    className="flex-1 h-9 text-[10px] rounded-xl bg-white/5 hover:bg-primary hover:text-black transition-all font-bold uppercase tracking-widest border border-white/10"
+                                    className="flex-1 h-12 text-[10px] rounded-xl bg-white/5 hover:bg-white/10 transition-all font-black uppercase tracking-widest border border-white/10 group"
                                     onClick={captureThumbnail}
                                 >
-                                    Snap Frame
+                                    <Camera className="w-4 h-4 mr-2 group-hover:text-primary transition-colors" />
+                                    Snap Cover
                                 </Button>
                             </div>
                         </div>
@@ -452,30 +487,31 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-4 pt-6 border-t border-white/5">
                 <Button
                     type="button"
                     variant="ghost"
-                    className="flex-1 h-12 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all"
+                    className="flex-1 h-14 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/5 transition-all"
                     onClick={onCancel}
                     disabled={loading}
                 >
-                    Cancel
+                    Discard
                 </Button>
                 <Button
                     type="submit"
-                    className="flex-[2] gap-3 font-black h-12 text-[10px] uppercase tracking-[0.2em] rounded-xl shadow-xl shadow-primary/20 bg-primary text-black hover:bg-primary/90 transition-all active:scale-95"
+                    className="flex-[2] gap-3 font-black h-14 text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-2xl shadow-primary/20 bg-primary text-black hover:bg-primary/90 transition-all active:scale-[0.98] group relative overflow-hidden"
                     disabled={loading}
                 >
+                    <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none" />
                     {loading ? (
                         <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>{uploadProgress < 100 ? "Syncing..." : "Wrapping up..."}</span>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span className="relative z-10">{uploadProgress < 100 ? "Uploading Metadata..." : "Processing Assets..."}</span>
                         </>
                     ) : (
                         <>
-                            {isEdit ? <Check className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                            <span>{isEdit ? "Save Changes" : "Publish Video"}</span>
+                            {isEdit ? <Check className="w-4 h-4 translate-z-0" /> : <Upload className="w-4 h-4" />}
+                            <span className="relative z-10">{isEdit ? "Update Project" : "Publish to Feed"}</span>
                         </>
                     )}
                 </Button>
