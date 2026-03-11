@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Video as VideoIcon, Upload, Loader2, Check, Lock, Unlock, Copy, Key, Scissors, Image as ImageIcon } from "lucide-react";
+import { Video as VideoIcon, Upload, Loader2, Check, Lock, Unlock, Copy, Key, Scissors, Image as ImageIcon, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
     const videoRef = useRef<HTMLVideoElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const thumbInputRef = useRef<HTMLInputElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
@@ -95,6 +96,9 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
             setErrors((prev) => ({ ...prev, video: "" }));
             const url = URL.createObjectURL(file);
             setVideoPreviewUrl(url);
+            // Reset thumbnail when a new video is picked to avoid confusion
+            setThumbnailFile(null);
+            if (!isEdit) setThumbnailPreviewUrl("");
         }
     };
 
@@ -105,6 +109,35 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
             const url = URL.createObjectURL(file);
             setThumbnailPreviewUrl(url);
         }
+    };
+
+    const captureThumbnail = () => {
+        if (!videoRef.current) return;
+
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // Draw current video frame to canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to blob
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const file = new File([blob], "thumbnail.jpg", { type: "image/jpeg" });
+                setThumbnailFile(file);
+                const url = URL.createObjectURL(file);
+                setThumbnailPreviewUrl(url);
+                toast.success("Thumbnail captured from video!");
+            }
+        }, "image/jpeg", 0.9);
     };
 
     const handleLoadedMetadata = () => {
@@ -177,6 +210,8 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            <canvas ref={canvasRef} className="hidden" />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column - Details */}
                 <div className="space-y-5">
@@ -248,11 +283,11 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
                     {/* Manual Thumbnail Upload */}
                     <div className="space-y-3">
-                        <Label className="text-xs sm:text-sm font-bold">Custom Thumbnail (Optional)</Label>
+                        <Label className="text-xs sm:text-sm font-bold">Cover Picture</Label>
                         <div
                             className={cn(
                                 "relative group cursor-pointer aspect-video rounded-xl overflow-hidden border-2 border-dashed transition-all hover:bg-secondary/10",
-                                thumbnailPreviewUrl ? "border-primary/30" : "border-white/10 h-32 flex flex-col items-center justify-center"
+                                thumbnailPreviewUrl ? "border-primary/30" : "border-white/10 h-40 flex flex-col items-center justify-center"
                             )}
                             onClick={() => thumbInputRef.current?.click()}
                         >
@@ -261,13 +296,14 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                     <img src={thumbnailPreviewUrl} className="w-full h-full object-cover" alt="Thumbnail Preview" />
                                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <ImageIcon className="w-8 h-8 mb-2 text-primary" />
-                                        <span className="text-xs font-bold uppercase tracking-widest text-white">Change Image</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest text-white">Change Cover</span>
                                     </div>
                                 </>
                             ) : (
                                 <>
                                     <ImageIcon className="w-6 h-6 mb-2 text-muted-foreground" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Upload Cover Image</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Upload Cover</span>
+                                    <span className="text-[10px] text-muted-foreground mt-1 text-center px-4 italic">(Or capture one from the video on the right)</span>
                                 </>
                             )}
                         </div>
@@ -283,7 +319,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
                 {/* Right Column - Video Player & Trim */}
                 <div className="space-y-4">
-                    <Label className="text-xs sm:text-sm font-bold">Video Processing</Label>
+                    <Label className="text-xs sm:text-sm font-bold">Video & Frame Capture</Label>
                     {!videoPreviewUrl ? (
                         <div
                             className={cn(
@@ -293,11 +329,11 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                             onClick={() => inputRef.current?.click()}
                         >
                             <VideoIcon className="w-8 h-8 mb-2 text-muted-foreground" />
-                            <span className="text-xs font-bold uppercase tracking-widest">Select Video</span>
+                            <span className="text-xs font-bold uppercase tracking-widest">Select Video File</span>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <div className="rounded-xl overflow-hidden bg-black aspect-video relative border border-white/5 ring-1 ring-white/10">
+                            <div className="rounded-xl overflow-hidden bg-black aspect-video relative border border-white/5 ring-1 ring-white/10 group/player">
                                 <div className="absolute inset-0 h-full w-full overflow-hidden">
                                     <video src={videoPreviewUrl} className="h-full w-full object-cover opacity-30 blur-md scale-110" muted />
                                 </div>
@@ -309,6 +345,19 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                     controls
                                     className="relative w-full h-full object-contain"
                                 />
+
+                                {/* Overlay Capture Button */}
+                                <div className="absolute top-3 right-3 opacity-0 group-hover/player:opacity-100 transition-opacity">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        className="h-8 bg-black/60 backdrop-blur-md border border-white/10 text-white hover:bg-primary hover:text-black gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg"
+                                        onClick={captureThumbnail}
+                                    >
+                                        <Camera className="w-3.5 h-3.5" />
+                                        Set as Cover
+                                    </Button>
+                                </div>
                             </div>
 
                             {duration > 0 && videoFile && (
@@ -316,8 +365,9 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                     <div className="flex items-center justify-between text-[10px] font-black text-primary uppercase tracking-[0.2em]">
                                         <span className="flex items-center gap-2">
                                             <Scissors className="w-3.5 h-3.5" />
-                                            TRIM ({formatTime(endTime - startTime)})
+                                            TRIM SELECTION
                                         </span>
+                                        <span className="text-muted-foreground">{formatTime(endTime - startTime)}</span>
                                     </div>
                                     <Slider
                                         value={[startTime, endTime]}
@@ -333,15 +383,23 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                 </div>
                             )}
 
-                            <div className="flex justify-center">
+                            <div className="flex justify-between items-center gap-3">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="h-8 px-4 text-[10px] rounded-xl border-dashed border-white/20 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest"
+                                    className="flex-1 h-9 text-[10px] rounded-xl border-dashed border-white/20 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest"
                                     onClick={() => inputRef.current?.click()}
                                 >
-                                    {isEdit ? "Update File" : "Pick Another"}
+                                    Change Video
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    className="flex-1 h-9 text-[10px] rounded-xl bg-white/5 hover:bg-primary hover:text-black transition-all font-bold uppercase tracking-widest border border-white/10"
+                                    onClick={captureThumbnail}
+                                >
+                                    Capture Frame
                                 </Button>
                             </div>
                         </div>
@@ -361,7 +419,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
             {loading && (
                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
-                        <span>{uploadProgress < 100 ? "Uploading Data" : "Finalizing Video"}</span>
+                        <span>{uploadProgress < 100 ? "Sending Files..." : "Finalizing..."}</span>
                         <span>{uploadProgress}%</span>
                     </div>
                     <Progress value={uploadProgress} className="h-1.5 shadow-sm" />
@@ -377,7 +435,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                     onClick={onCancel}
                     disabled={loading}
                 >
-                    Discard
+                    Cancel
                 </Button>
                 <Button
                     type="submit"
@@ -387,12 +445,12 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                     {loading ? (
                         <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>{uploadProgress < 100 ? "Syncing..." : "Processing..."}</span>
+                            <span>{uploadProgress < 100 ? "Syncing..." : "Wrapping up..."}</span>
                         </>
                     ) : (
                         <>
                             {isEdit ? <Check className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                            <span>{isEdit ? "Update Master" : "Confirm Upload"}</span>
+                            <span>{isEdit ? "Save Changes" : "Publish Video"}</span>
                         </>
                     )}
                 </Button>
