@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
 import { MESSAGES } from "@/constants/messages";
 import type { VideoItem } from "@/types/video.types";
 import { toast } from "sonner";
 
 interface VideoFormProps {
     initialData?: VideoItem;
-    onSubmit: (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string) => Promise<boolean>;
+    onSubmit: (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string, onProgress?: (progress: number) => void) => Promise<boolean>;
     onCancel: () => void;
 }
 
@@ -31,6 +32,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [copied, setCopied] = useState(false);
 
     const isEdit = !!initialData;
@@ -118,10 +120,8 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
+        setUploadProgress(0);
 
-        // If the user hasn't moved the sliders, or it's the full duration, we use -1 for endTime to signal "Full Upload" to backend
-        // Actually, backend now checks if it should trim based on startTime and endTime ranges.
-        // If startTime is 0 and endTime is close to duration, we can pass 0 and -1 to avoid trimming.
         let finalStart = startTime;
         let finalEnd = endTime;
 
@@ -130,7 +130,16 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
             finalEnd = 999999; // Large number or special signal
         }
 
-        const success = await onSubmit(name.trim(), videoFile || undefined, finalStart, finalEnd, isPrivate, accessKey);
+        const success = await onSubmit(
+            name.trim(),
+            videoFile || undefined,
+            finalStart,
+            finalEnd,
+            isPrivate,
+            accessKey,
+            (progress) => setUploadProgress(progress)
+        );
+
         setLoading(false);
         if (success) {
             onCancel();
@@ -299,6 +308,17 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                 {errors.trim && <p className="text-[10px] text-destructive">{errors.trim}</p>}
             </div>
 
+            {/* Upload Progress */}
+            {loading && uploadProgress > 0 && (
+                <div className="space-y-2 animate-in fade-in zoom-in duration-300">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
+                        <span>Uploading Video</span>
+                        <span>{uploadProgress}%</span>
+                    </div>
+                    <Progress value={uploadProgress} className="h-1.5" />
+                </div>
+            )}
+
             {/* Buttons */}
             <div className="flex gap-2 pt-1 sm:gap-3">
                 <Button type="button" variant="outline" className="flex-1 h-11 text-xs font-black uppercase tracking-widest rounded-xl transition-all active:scale-95" onClick={onCancel} disabled={loading}>
@@ -308,7 +328,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                     {loading ? (
                         <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Processing...</span>
+                            <span>{uploadProgress < 100 ? "Uploading..." : "Processing..."}</span>
                         </>
                     ) : (
                         <>

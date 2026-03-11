@@ -28,7 +28,15 @@ export const videoService = {
         return res.data.data;
     },
 
-    create: async (name: string, video: File, startTime: number, endTime: number, isPrivate: boolean, accessKey: string): Promise<VideoItem> => {
+    create: async (
+        name: string,
+        video: File,
+        startTime: number,
+        endTime: number,
+        isPrivate: boolean,
+        accessKey: string,
+        onProgress?: (progress: number) => void
+    ): Promise<VideoItem> => {
         const form = new FormData();
         form.append("name", name);
         form.append("video", video);
@@ -38,11 +46,27 @@ export const videoService = {
             form.append("isPrivate", "true");
             if (accessKey) form.append("accessKey", accessKey);
         }
-        const res = await api.post<ApiResponse<VideoItem>>("/videos", form);
+        const res = await api.post<ApiResponse<VideoItem>>("/videos", form, {
+            onUploadProgress: (progressEvent) => {
+                if (onProgress && progressEvent.total) {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    onProgress(progress);
+                }
+            },
+        });
         return res.data.data;
     },
 
-    update: async (id: string, name?: string, video?: File, startTime?: number, endTime?: number, isPrivate?: boolean, accessKey?: string): Promise<VideoItem> => {
+    update: async (
+        id: string,
+        name?: string,
+        video?: File,
+        startTime?: number,
+        endTime?: number,
+        isPrivate?: boolean,
+        accessKey?: string,
+        onProgress?: (progress: number) => void
+    ): Promise<VideoItem> => {
         const form = new FormData();
         if (name) form.append("name", name);
         if (video) form.append("video", video);
@@ -51,7 +75,14 @@ export const videoService = {
         if (isPrivate !== undefined) form.append("isPrivate", isPrivate ? "true" : "false");
         if (accessKey) form.append("accessKey", accessKey);
 
-        const res = await api.put<ApiResponse<VideoItem>>(`/videos/${id}`, form);
+        const res = await api.put<ApiResponse<VideoItem>>(`/videos/${id}`, form, {
+            onUploadProgress: (progressEvent) => {
+                if (onProgress && progressEvent.total) {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    onProgress(progress);
+                }
+            },
+        });
         return res.data.data;
     },
 
