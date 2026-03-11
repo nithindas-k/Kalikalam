@@ -13,6 +13,16 @@ export interface CreateVideoPayload {
     accessKey: string;
 }
 
+export interface UpdateVideoPayload {
+    id: string;
+    name?: string;
+    video?: File;
+    startTime?: number;
+    endTime?: number;
+    isPrivate?: boolean;
+    accessKey?: string;
+}
+
 export function useVideos() {
     const [videos, setVideos] = useState<VideoItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -55,6 +65,26 @@ export function useVideos() {
         }
     };
 
+    const updateVideo = async (payload: UpdateVideoPayload): Promise<boolean> => {
+        try {
+            await videoService.update(
+                payload.id,
+                payload.name,
+                payload.video,
+                payload.startTime,
+                payload.endTime,
+                payload.isPrivate,
+                payload.accessKey
+            );
+            toast.success("Video updated successfully!");
+            await fetchVideos();
+            return true;
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to update video");
+            return false;
+        }
+    };
+
     const removeVideo = async (id: string): Promise<boolean> => {
         try {
             await videoService.delete(id);
@@ -73,6 +103,7 @@ export function useVideos() {
         error,
         fetchVideos,
         addVideo,
+        updateVideo,
         removeVideo,
     };
 }

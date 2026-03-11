@@ -3,6 +3,7 @@ export interface CreateVideoDTO {
     videoUrl: string;
     videoPublicId: string;
     thumbnailUrl?: string;
+    thumbnailPublicId?: string;
     creatorId: string;
     isPrivate: boolean;
     accessKey?: string;

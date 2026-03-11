@@ -5,6 +5,7 @@ export interface IVideoDocument extends Document {
     videoUrl: string;
     videoPublicId: string;
     thumbnailUrl?: string;
+    thumbnailPublicId?: string;
     creatorId?: string;
     isPrivate: boolean;
     accessKey?: string;
@@ -18,6 +19,7 @@ const VideoSchema = new Schema<IVideoDocument>(
         videoUrl: { type: String, required: true },
         videoPublicId: { type: String, required: true },
         thumbnailUrl: { type: String },
+        thumbnailPublicId: { type: String },
         creatorId: { type: String },
         isPrivate: { type: Boolean, default: false },
         accessKey: { type: String },

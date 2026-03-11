@@ -36,6 +36,8 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
     const [isLocalUnlocked, setIsLocalUnlocked] = useState(getUnlockedIds().includes(video.id));
     const [shake, setShake] = useState(false);
 
+    const [isHovering, setIsHovering] = useState(false);
+
     const isOwner = video.creatorId === getDeviceId();
     const isLocked = video.isPrivate && !isOwner && !isLocalUnlocked;
 
@@ -56,31 +58,53 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
     };
 
     return (
-        <Card className={cn(
-            "group relative overflow-hidden border-border bg-card transition-all duration-500 shadow-xl w-full",
-            isActive ? "ring-2 ring-primary border-transparent" : "hover:border-primary/50",
-            isLocked && "hover:shadow-primary/5 shadow-2xl"
-        )}>
+        <Card
+            className={cn(
+                "group relative overflow-hidden border-border bg-card transition-all duration-500 shadow-xl w-full",
+                isActive ? "ring-2 ring-primary border-transparent" : "hover:border-primary/50",
+                isLocked && "hover:shadow-primary/5 shadow-2xl"
+            )}
+            onMouseEnter={() => !isLocked && setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+        >
             {/* Thumbnail Area */}
             <div
                 className="relative aspect-video w-full cursor-pointer overflow-hidden bg-black"
                 onClick={() => !isLocked && onPlay(video)}
             >
-                {video.thumbnailUrl || video.videoUrl ? (
-                    <img
-                        src={video.thumbnailUrl || video.videoUrl}
-                        alt={video.name}
+                {/* Regular Thumbnail */}
+                <img
+                    src={video.thumbnailUrl || video.videoUrl}
+                    alt={video.name}
+                    className={cn(
+                        "h-full w-full object-cover transition-all duration-700 ease-in-out",
+                        !isLocked && "group-hover:scale-110 group-hover:opacity-0",
+                        isLocked && "blur-xl scale-110 opacity-70"
+                    )}
+                    loading="lazy"
+                />
+
+                {/* Hover Video Preview */}
+                {!isLocked && (
+                    <video
+                        src={video.videoUrl}
+                        muted
+                        loop
+                        playsInline
                         className={cn(
-                            "h-full w-full object-cover transition-all duration-700 ease-in-out",
-                            !isLocked && "group-hover:scale-110",
-                            isLocked && "blur-xl scale-110 opacity-70"
+                            "absolute inset-0 h-full w-full object-cover transition-opacity duration-500",
+                            isHovering ? "opacity-100" : "opacity-0"
                         )}
-                        loading="lazy"
+                        ref={(el) => {
+                            if (el) {
+                                if (isHovering) el.play().catch(() => { });
+                                else {
+                                    el.pause();
+                                    el.currentTime = 0;
+                                }
+                            }
+                        }}
                     />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-secondary/20">
-                        <Play className="h-10 w-10 text-muted-foreground opacity-50" />
-                    </div>
                 )}
 
                 {/* Status Badge */}

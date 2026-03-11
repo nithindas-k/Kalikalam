@@ -30,14 +30,17 @@ export class VideoService implements IVideoService {
         const existing = await this.repo.findById(id);
         if (!existing) throw Object.assign(new Error("Video not found"), { status: 404 });
 
-      
+
         if (existing.creatorId !== creatorId) {
             throw Object.assign(new Error("You do not have permission to edit this"), { status: 403 });
         }
 
-       
+
         if (dto.videoPublicId && dto.videoPublicId !== existing.videoPublicId) {
             await cloudinary.uploader.destroy(existing.videoPublicId, { resource_type: "video" });
+            if (existing.thumbnailPublicId) {
+                await cloudinary.uploader.destroy(existing.thumbnailPublicId);
+            }
         }
 
         const updated = await this.repo.update(id, dto);
@@ -49,12 +52,14 @@ export class VideoService implements IVideoService {
         const doc = await this.repo.findById(id);
         if (!doc) throw Object.assign(new Error("Video not found"), { status: 404 });
 
-       
         if (doc.creatorId !== creatorId) {
             throw Object.assign(new Error("You do not have permission to delete this"), { status: 403 });
         }
 
         await cloudinary.uploader.destroy(doc.videoPublicId, { resource_type: "video" });
+        if (doc.thumbnailPublicId) {
+            await cloudinary.uploader.destroy(doc.thumbnailPublicId);
+        }
 
         await this.repo.delete(id);
         return true;

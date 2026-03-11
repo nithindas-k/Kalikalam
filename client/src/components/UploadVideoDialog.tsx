@@ -5,7 +5,7 @@ import type { VideoItem } from "@/types/video.types";
 interface UploadVideoDialogProps {
     open: boolean;
     onClose: () => void;
-    onSubmit: (name: string, video: File, startTime: number, endTime: number, isPrivate: boolean, accessKey: string) => Promise<boolean>;
+    onSubmit: (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string) => Promise<boolean>;
     video?: VideoItem;
 }
 

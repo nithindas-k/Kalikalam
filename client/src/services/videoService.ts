@@ -42,6 +42,19 @@ export const videoService = {
         return res.data.data;
     },
 
+    update: async (id: string, name?: string, video?: File, startTime?: number, endTime?: number, isPrivate?: boolean, accessKey?: string): Promise<VideoItem> => {
+        const form = new FormData();
+        if (name) form.append("name", name);
+        if (video) form.append("video", video);
+        if (startTime !== undefined) form.append("startTime", startTime.toString());
+        if (endTime !== undefined) form.append("endTime", endTime.toString());
+        if (isPrivate !== undefined) form.append("isPrivate", isPrivate ? "true" : "false");
+        if (accessKey) form.append("accessKey", accessKey);
+
+        const res = await api.put<ApiResponse<VideoItem>>(`/videos/${id}`, form);
+        return res.data.data;
+    },
+
     delete: async (id: string): Promise<void> => {
         await api.delete(`/videos/${id}`);
     },

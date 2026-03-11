@@ -12,10 +12,9 @@ import { Button } from "@/components/ui/button";
 import { useVideos } from "@/hooks/useVideos";
 import { cn } from "@/lib/utils";
 import type { VideoItem } from "@/types/video.types";
-import { toast } from "sonner";
 
 export default function VideosPage() {
-    const { videos, loading, error, addVideo, removeVideo, fetchVideos } = useVideos();
+    const { videos, loading, error, addVideo, updateVideo, removeVideo, fetchVideos } = useVideos();
 
     const [uploadOpen, setUploadOpen] = useState(false);
     const [editVideoItem, setEditVideoItem] = useState<VideoItem | undefined>(undefined);
@@ -30,16 +29,22 @@ export default function VideosPage() {
         return videos.filter(video => video.name.toLowerCase().includes(query));
     }, [videos, searchQuery]);
 
-    const handleAddSubmit = async (name: string, video: File, startTime: number, endTime: number, isPrivate: boolean, accessKey: string): Promise<boolean> => {
+    const handleAddSubmit = async (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string): Promise<boolean> => {
+        if (!video) return false;
         return addVideo({ name, video, startTime, endTime, isPrivate, accessKey });
     };
 
-    const handleEditSubmit = async (_name: string, _video: File, _startTime: number, _endTime: number, _isPrivate: boolean, _accessKey: string): Promise<boolean> => {
-        // Since backend edit is minimal, we can either re-upload or just change name.
-        // For simplicity we use addVideo approach or just rely on your update endpoint if implemented in hook
-        // Since useVideos only has removeVideo and addVideo right now, we will handle this later or rely on addVideo if modifying.
-        toast.info("Updating video not fully implemented for trimmer yet");
-        return false;
+    const handleEditSubmit = async (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string): Promise<boolean> => {
+        if (!editVideoItem) return false;
+        return updateVideo({
+            id: editVideoItem.id,
+            name,
+            video,
+            startTime,
+            endTime,
+            isPrivate,
+            accessKey
+        });
     };
 
     const openEdit = (video: VideoItem) => setEditVideoItem(video);

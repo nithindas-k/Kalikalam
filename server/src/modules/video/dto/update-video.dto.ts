@@ -3,4 +3,7 @@ export interface UpdateVideoDTO {
     videoUrl?: string;
     videoPublicId?: string;
     thumbnailUrl?: string;
+    thumbnailPublicId?: string;
+    isPrivate?: boolean;
+    accessKey?: string;
 }

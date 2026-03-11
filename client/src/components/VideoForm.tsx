@@ -11,16 +11,16 @@ import { toast } from "sonner";
 
 interface VideoFormProps {
     initialData?: VideoItem;
-    onSubmit: (name: string, video: File, startTime: number, endTime: number, isPrivate: boolean, accessKey: string) => Promise<boolean>;
+    onSubmit: (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string) => Promise<boolean>;
     onCancel: () => void;
 }
 
 export default function VideoForm({ initialData, onSubmit, onCancel }: VideoFormProps) {
     const [name, setName] = useState(initialData?.name ?? "");
     const [isPrivate, setIsPrivate] = useState(initialData?.isPrivate ?? false);
-    const [accessKey, setAccessKey] = useState("");
-    const [videoBlob, setVideoBlob] = useState<File | null>(null);
-    const [videoPreviewUrl, setVideoPreviewUrl] = useState<string>("");
+    const [accessKey, setAccessKey] = useState(initialData?.accessKey ?? "");
+    const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [videoPreviewUrl, setVideoPreviewUrl] = useState<string>(initialData?.videoUrl ?? "");
 
     // Trimming State
     const [duration, setDuration] = useState(0);
@@ -43,7 +43,10 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
     useEffect(() => {
         return () => {
-            if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+            // Only revoke if it's a blob url
+            if (videoPreviewUrl && videoPreviewUrl.startsWith("blob:")) {
+                URL.revokeObjectURL(videoPreviewUrl);
+            }
         };
     }, [videoPreviewUrl]);
 
@@ -62,7 +65,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
         if (!name.trim()) errs.name = MESSAGES.NAME_REQUIRED;
-        if (!isEdit && !videoBlob) errs.video = "Video file is required";
+        if (!isEdit && !videoFile) errs.video = "Video file is required";
         if (endTime > 0 && startTime >= endTime) errs.trim = "Start time must be before end time";
         setErrors(errs);
         return Object.keys(errs).length === 0;
@@ -71,7 +74,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
     const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setVideoBlob(file);
+            setVideoFile(file);
             setErrors((prev) => ({ ...prev, video: "" }));
             const url = URL.createObjectURL(file);
             setVideoPreviewUrl(url);
@@ -97,13 +100,21 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validate() || !videoBlob) return;
+        if (!validate()) return;
         setLoading(true);
 
-        const finalStart = startTime;
-        const finalEnd = endTime === duration ? duration : endTime;
+        // If the user hasn't moved the sliders, or it's the full duration, we use -1 for endTime to signal "Full Upload" to backend
+        // Actually, backend now checks if it should trim based on startTime and endTime ranges.
+        // If startTime is 0 and endTime is close to duration, we can pass 0 and -1 to avoid trimming.
+        let finalStart = startTime;
+        let finalEnd = endTime;
 
-        const success = await onSubmit(name.trim(), videoBlob, finalStart, finalEnd, isPrivate, accessKey);
+        // No trimming if it's the full length
+        if (startTime === 0 && (endTime === duration || endTime === 0)) {
+            finalEnd = 999999; // Large number or special signal
+        }
+
+        const success = await onSubmit(name.trim(), videoFile || undefined, finalStart, finalEnd, isPrivate, accessKey);
         setLoading(false);
         if (success) {
             onCancel();
@@ -111,6 +122,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
     };
 
     const formatTime = (timeInSeconds: number) => {
+        if (!isFinite(timeInSeconds)) return "0:00";
         const minutes = Math.floor(timeInSeconds / 60);
         const seconds = Math.floor(timeInSeconds % 60);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -135,64 +147,62 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
             </div>
 
             {/* Visibility Settings - Segmented Control Style */}
-            {!isEdit && (
-                <div className="space-y-3">
-                    <Label className="text-xs sm:text-sm font-bold text-foreground">Content Visibility</Label>
-                    <div className="flex p-1 bg-secondary/50 rounded-2xl border border-border/50">
-                        <button
-                            type="button"
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all duration-300",
-                                !isPrivate ? "bg-primary text-black shadow-lg font-bold" : "text-muted-foreground hover:text-foreground"
-                            )}
-                            onClick={() => setIsPrivate(false)}
-                        >
-                            <Unlock className={cn("h-4 w-4", !isPrivate ? "animate-in zoom-in" : "")} />
-                            <span className="text-xs">Public</span>
-                        </button>
-                        <button
-                            type="button"
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all duration-300",
-                                isPrivate ? "bg-primary text-black shadow-lg font-bold" : "text-muted-foreground hover:text-foreground"
-                            )}
-                            onClick={() => setIsPrivate(true)}
-                        >
-                            <Lock className={cn("h-4 w-4", isPrivate ? "animate-in zoom-in" : "")} />
-                            <span className="text-xs">Private</span>
-                        </button>
-                    </div>
+            <div className="space-y-3">
+                <Label className="text-xs sm:text-sm font-bold text-foreground">Content Visibility</Label>
+                <div className="flex p-1 bg-secondary/50 rounded-2xl border border-border/50">
+                    <button
+                        type="button"
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all duration-300",
+                            !isPrivate ? "bg-primary text-black shadow-lg font-bold" : "text-muted-foreground hover:text-foreground"
+                        )}
+                        onClick={() => setIsPrivate(false)}
+                    >
+                        <Unlock className={cn("h-4 w-4", !isPrivate ? "animate-in zoom-in" : "")} />
+                        <span className="text-xs">Public</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all duration-300",
+                            isPrivate ? "bg-primary text-black shadow-lg font-bold" : "text-muted-foreground hover:text-foreground"
+                        )}
+                        onClick={() => setIsPrivate(true)}
+                    >
+                        <Lock className={cn("h-4 w-4", isPrivate ? "animate-in zoom-in" : "")} />
+                        <span className="text-xs">Private</span>
+                    </button>
+                </div>
 
-                    {isPrivate && (
-                        <div className="animate-in fade-in slide-in-from-top-2 duration-500">
-                            <div className="relative rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-inner overflow-hidden">
-                                <div className="absolute top-0 right-0 p-2 opacity-[0.03]">
-                                    <Key className="h-16 w-16 -mr-4 -mt-4 text-primary" />
+                {isPrivate && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+                        <div className="relative rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-inner overflow-hidden">
+                            <div className="absolute top-0 right-0 p-2 opacity-[0.03]">
+                                <Key className="h-16 w-16 -mr-4 -mt-4 text-primary" />
+                            </div>
+                            <p className="mb-3 text-[10px] font-black text-primary uppercase tracking-[0.2em]">Shareable Access Key</p>
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-12 flex-1 items-center gap-3 rounded-xl bg-black/40 px-4 border border-white/10 shadow-lg group/keybox hover:border-primary/30 transition-colors">
+                                    <Key className="h-4 w-4 text-primary mt-0.5" />
+                                    <span className="text-base font-black tracking-[0.3em] text-primary font-mono select-all">
+                                        {accessKey}
+                                    </span>
                                 </div>
-                                <p className="mb-3 text-[10px] font-black text-primary uppercase tracking-[0.2em]">Shareable Access Key</p>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex h-12 flex-1 items-center gap-3 rounded-xl bg-black/40 px-4 border border-white/10 shadow-lg group/keybox hover:border-primary/30 transition-colors">
-                                        <Key className="h-4 w-4 text-primary mt-0.5" />
-                                        <span className="text-base font-black tracking-[0.3em] text-primary font-mono select-all">
-                                            {accessKey}
-                                        </span>
-                                    </div>
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="outline"
-                                        className="h-12 w-12 border-white/10 bg-black/40 hover:bg-black/60 rounded-xl transition-all"
-                                        onClick={copyToClipboard}
-                                        title="Copy Key"
-                                    >
-                                        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                                    </Button>
-                                </div>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-12 w-12 border-white/10 bg-black/40 hover:bg-black/60 rounded-xl transition-all"
+                                    onClick={copyToClipboard}
+                                    title="Copy Key"
+                                >
+                                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                </Button>
                             </div>
                         </div>
-                    )}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
 
             {/* Video Upload & Trimming */}
             <div className="space-y-3">
@@ -212,7 +222,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div className="rounded-xl overflow-hidden bg-black aspect-video relative">
+                        <div className="rounded-xl overflow-hidden bg-black aspect-video relative border border-white/5">
                             <video
                                 ref={videoRef}
                                 src={videoPreviewUrl}
@@ -222,15 +232,15 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                             />
                         </div>
 
-                        {duration > 0 && (
-                            <div className="bg-secondary/30 p-4 rounded-xl space-y-4 border border-border/50">
-                                <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                        {duration > 0 && videoFile && (
+                            <div className="bg-secondary/30 p-4 rounded-xl space-y-4 border border-border/50 animate-in zoom-in duration-500">
+                                <div className="flex items-center justify-between text-xs font-black text-primary uppercase tracking-widest">
                                     <span className="flex items-center gap-2">
-                                        <Scissors className="w-4 h-4 text-primary" />
-                                        Trim Video
+                                        <Scissors className="w-4 h-4" />
+                                        Trim Selection
                                     </span>
-                                    <span>
-                                        Duration: {formatTime(endTime - startTime)}
+                                    <span className="text-muted-foreground">
+                                        {formatTime(endTime - startTime)}
                                     </span>
                                 </div>
                                 <Slider
@@ -240,23 +250,24 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                     onValueChange={handleSliderChange}
                                     className="pt-2 pb-2"
                                 />
-                                <div className="flex justify-between text-xs">
+                                <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
                                     <span>{formatTime(startTime)}</span>
                                     <span>{formatTime(endTime)}</span>
                                 </div>
-                                <div className="flex justify-end">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 text-xs"
-                                        onClick={() => inputRef.current?.click()}
-                                    >
-                                        Change Video
-                                    </Button>
-                                </div>
                             </div>
                         )}
+
+                        <div className="flex justify-center">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-9 px-4 text-xs rounded-xl border-dashed hover:bg-primary/10 hover:text-primary transition-all font-bold uppercase tracking-wider"
+                                onClick={() => inputRef.current?.click()}
+                            >
+                                {isEdit ? "Replace Video" : "Change Video"}
+                            </Button>
+                        </div>
                     </div>
                 )}
 
@@ -273,10 +284,10 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
             {/* Buttons */}
             <div className="flex gap-2 pt-1 sm:gap-3">
-                <Button type="button" variant="outline" className="flex-1 h-9 sm:h-10 text-xs sm:text-sm" onClick={onCancel} disabled={loading}>
+                <Button type="button" variant="outline" className="flex-1 h-11 text-xs font-black uppercase tracking-widest rounded-xl transition-all active:scale-95" onClick={onCancel} disabled={loading}>
                     Cancel
                 </Button>
-                <Button type="submit" className="flex-1 gap-2 font-bold h-9 sm:h-10 text-xs sm:text-sm" disabled={loading}>
+                <Button type="submit" className="flex-1 gap-2 font-black h-11 text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-primary/20 bg-primary text-black hover:bg-primary/95 transition-all active:scale-95" disabled={loading}>
                     {loading ? (
                         <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -284,8 +295,8 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                         </>
                     ) : (
                         <>
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>Upload Video</span>
+                            {isEdit ? <Check className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+                            <span>{isEdit ? "Update Video" : "Upload Video"}</span>
                         </>
                     )}
                 </Button>

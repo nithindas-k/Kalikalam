@@ -62,17 +62,19 @@ export default function VideoPlayer({ video, isPaused, onTogglePause, onClose }:
     return (
         <div className="player-slide-up fixed bottom-0 left-0 right-0 z-50 glass border-t border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
             <div className="flex flex-col sm:flex-row items-center justify-between w-full h-auto p-4 gap-4 max-w-7xl mx-auto">
-                <div className="w-full sm:w-1/3 flex items-center justify-center p-2">
-                    <video
-                        ref={videoRef}
-                        src={video.videoUrl}
-                        onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
-                        onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
-                        onEnded={onTogglePause}
-                        className="w-full h-auto max-h-[150px] rounded-lg shadow-xl cursor-pointer"
-                        onClick={onTogglePause}
-                        poster={video.thumbnailUrl}
-                    />
+                <div className="w-full sm:w-1/3 flex items-center justify-center p-1 bg-black/20 rounded-xl">
+                    <div className="relative aspect-video w-full overflow-hidden rounded-lg shadow-2xl border border-white/5">
+                        <video
+                            ref={videoRef}
+                            src={video.videoUrl}
+                            onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
+                            onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
+                            onEnded={onTogglePause}
+                            className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-700"
+                            onClick={onTogglePause}
+                            poster={video.thumbnailUrl}
+                        />
+                    </div>
                 </div>
 
                 <div className="w-full sm:w-2/3 flex flex-col gap-3">
