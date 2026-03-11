@@ -222,13 +222,13 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div className="rounded-xl overflow-hidden bg-black aspect-video relative border border-white/5">
+                        <div className="rounded-xl overflow-hidden bg-black relative border border-white/5">
                             <video
                                 ref={videoRef}
                                 src={videoPreviewUrl}
                                 onLoadedMetadata={handleLoadedMetadata}
                                 controls
-                                className="w-full h-full object-contain"
+                                className="w-full h-auto max-h-[50vh] object-contain"
                             />
                         </div>
 

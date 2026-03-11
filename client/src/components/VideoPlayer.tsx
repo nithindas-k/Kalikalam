@@ -63,14 +63,14 @@ export default function VideoPlayer({ video, isPaused, onTogglePause, onClose }:
         <div className="player-slide-up fixed bottom-0 left-0 right-0 z-50 glass border-t border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
             <div className="flex flex-col sm:flex-row items-center justify-between w-full h-auto p-4 gap-4 max-w-7xl mx-auto">
                 <div className="w-full sm:w-1/3 flex items-center justify-center p-1 bg-black/20 rounded-xl">
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg shadow-2xl border border-white/5">
+                    <div className="relative w-full overflow-hidden rounded-lg shadow-2xl border border-white/5 bg-black/40">
                         <video
                             ref={videoRef}
                             src={video.videoUrl}
                             onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
                             onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
                             onEnded={onTogglePause}
-                            className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-700"
+                            className="w-full h-auto max-h-[40vh] object-contain cursor-pointer hover:scale-[1.02] transition-transform duration-700"
                             onClick={onTogglePause}
                             poster={video.thumbnailUrl}
                         />
