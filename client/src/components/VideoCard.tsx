@@ -71,12 +71,19 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
                 className="relative aspect-video w-full cursor-pointer overflow-hidden bg-black"
                 onClick={() => !isLocked && onPlay(video)}
             >
-                {/* Regular Thumbnail */}
+                {/* Background Blur Layer (Fills the box to prevent black bars) */}
+                <img
+                    src={video.thumbnailUrl || video.videoUrl}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover opacity-30 blur-md scale-110"
+                />
+
+                {/* Main Thumbnail (Sharp and never stretched) */}
                 <img
                     src={video.thumbnailUrl || video.videoUrl}
                     alt={video.name}
                     className={cn(
-                        "h-full w-full object-cover transition-all duration-700 ease-in-out",
+                        "relative h-full w-full object-contain transition-all duration-700 ease-in-out",
                         !isLocked && "group-hover:scale-110",
                         isLocked && "blur-xl scale-110 opacity-70"
                     )}
@@ -85,25 +92,35 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
 
                 {/* Hover Video Preview */}
                 {!isLocked && (
-                    <video
-                        src={video.videoUrl}
-                        muted
-                        loop
-                        playsInline
-                        className={cn(
-                            "absolute inset-0 h-full w-full object-cover transition-opacity duration-700 pointer-events-none",
-                            isHovering ? "opacity-100 scale-110" : "opacity-0 scale-100"
-                        )}
-                        ref={(el) => {
-                            if (el) {
-                                if (isHovering) el.play().catch(() => { });
-                                else {
-                                    el.pause();
-                                    el.currentTime = 0;
+                    <div className={cn(
+                        "absolute inset-0 h-full w-full transition-opacity duration-700",
+                        isHovering ? "opacity-100" : "opacity-0"
+                    )}>
+                        {/* Background blur for video too */}
+                        <video
+                            src={video.videoUrl}
+                            muted
+                            loop
+                            playsInline
+                            className="absolute inset-0 h-full w-full object-cover opacity-30 blur-md scale-110"
+                        />
+                        <video
+                            src={video.videoUrl}
+                            muted
+                            loop
+                            playsInline
+                            className="relative h-full w-full object-contain scale-110"
+                            ref={(el) => {
+                                if (el) {
+                                    if (isHovering) el.play().catch(() => { });
+                                    else {
+                                        el.pause();
+                                        el.currentTime = 0;
+                                    }
                                 }
-                            }
-                        }}
-                    />
+                            }}
+                        />
+                    </div>
                 )}
 
                 {/* Gradient Overlay for better contrast */}
