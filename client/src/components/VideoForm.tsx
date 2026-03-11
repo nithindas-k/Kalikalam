@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Video as VideoIcon, Upload, Loader2, Check, Lock, Unlock, Copy, Key, Scissors, Image as ImageIcon, Camera } from "lucide-react";
+import { Video as VideoIcon, Upload, Loader2, Check, Lock, Unlock, Copy, Key, Scissors, Image as ImageIcon, Camera, Crop } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { MESSAGES } from "@/constants/messages";
 import type { VideoItem } from "@/types/video.types";
 import { toast } from "sonner";
+import ImageCropDialog from "./ImageCropDialog";
 
 interface VideoFormProps {
     initialData?: VideoItem;
@@ -34,6 +35,9 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string>(initialData?.thumbnailUrl ?? "");
+
+    // Cropping State
+    const [cropImage, setCropImage] = useState<string | null>(null);
 
     // Trimming State
     const [duration, setDuration] = useState(0);
@@ -96,7 +100,6 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
             setErrors((prev) => ({ ...prev, video: "" }));
             const url = URL.createObjectURL(file);
             setVideoPreviewUrl(url);
-            // Reset thumbnail when a new video is picked to avoid confusion
             setThumbnailFile(null);
             if (!isEdit) setThumbnailPreviewUrl("");
         }
@@ -105,10 +108,17 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
     const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setThumbnailFile(file);
             const url = URL.createObjectURL(file);
-            setThumbnailPreviewUrl(url);
+            setCropImage(url);
         }
+    };
+
+    const handleCropComplete = (croppedBlob: Blob) => {
+        const file = new File([croppedBlob], "thumbnail.jpg", { type: "image/jpeg" });
+        setThumbnailFile(file);
+        const url = URL.createObjectURL(croppedBlob);
+        setThumbnailPreviewUrl(url);
+        toast.success("Thumbnail cropped and updated!");
     };
 
     const captureThumbnail = () => {
@@ -118,24 +128,18 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // Set canvas dimensions to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // Draw current video frame to canvas
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Convert canvas to blob
         canvas.toBlob((blob) => {
             if (blob) {
-                const file = new File([blob], "thumbnail.jpg", { type: "image/jpeg" });
-                setThumbnailFile(file);
-                const url = URL.createObjectURL(file);
-                setThumbnailPreviewUrl(url);
-                toast.success("Thumbnail captured from video!");
+                const url = URL.createObjectURL(blob);
+                setCropImage(url);
             }
         }, "image/jpeg", 0.9);
     };
@@ -212,6 +216,16 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
         <form onSubmit={handleSubmit} className="space-y-6">
             <canvas ref={canvasRef} className="hidden" />
 
+            {cropImage && (
+                <ImageCropDialog
+                    image={cropImage}
+                    open={!!cropImage}
+                    onClose={() => setCropImage(null)}
+                    onCropComplete={handleCropComplete}
+                    aspectRatio={16 / 9}
+                />
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column - Details */}
                 <div className="space-y-5">
@@ -283,7 +297,19 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
 
                     {/* Manual Thumbnail Upload */}
                     <div className="space-y-3">
-                        <Label className="text-xs sm:text-sm font-bold">Cover Picture</Label>
+                        <Label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                            Cover Picture
+                            {thumbnailPreviewUrl && (
+                                <button
+                                    type="button"
+                                    onClick={() => setCropImage(thumbnailPreviewUrl)}
+                                    className="text-[10px] text-primary hover:underline flex items-center gap-1"
+                                >
+                                    <Crop className="w-3 h-3" />
+                                    Adjust Crop
+                                </button>
+                            )}
+                        </Label>
                         <div
                             className={cn(
                                 "relative group cursor-pointer aspect-video rounded-xl overflow-hidden border-2 border-dashed transition-all hover:bg-secondary/10",
@@ -346,7 +372,6 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                     className="relative w-full h-full object-contain"
                                 />
 
-                                {/* Overlay Capture Button */}
                                 <div className="absolute top-3 right-3 opacity-0 group-hover/player:opacity-100 transition-opacity">
                                     <Button
                                         type="button"
@@ -355,7 +380,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                         onClick={captureThumbnail}
                                     >
                                         <Camera className="w-3.5 h-3.5" />
-                                        Set as Cover
+                                        Capture Frame
                                     </Button>
                                 </div>
                             </div>
@@ -399,7 +424,7 @@ export default function VideoForm({ initialData, onSubmit, onCancel }: VideoForm
                                     className="flex-1 h-9 text-[10px] rounded-xl bg-white/5 hover:bg-primary hover:text-black transition-all font-bold uppercase tracking-widest border border-white/10"
                                     onClick={captureThumbnail}
                                 >
-                                    Capture Frame
+                                    Snap Frame
                                 </Button>
                             </div>
                         </div>
