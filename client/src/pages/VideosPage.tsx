@@ -29,12 +29,12 @@ export default function VideosPage() {
         return videos.filter(video => video.name.toLowerCase().includes(query));
     }, [videos, searchQuery]);
 
-    const handleAddSubmit = async (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string, onProgress?: (progress: number) => void): Promise<boolean> => {
+    const handleAddSubmit = async (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string, onProgress?: (progress: number) => void, thumbnail?: File): Promise<boolean> => {
         if (!video) return false;
-        return addVideo({ name, video, startTime, endTime, isPrivate, accessKey, onProgress });
+        return addVideo({ name, video, startTime, endTime, isPrivate, accessKey, onProgress, thumbnail });
     };
 
-    const handleEditSubmit = async (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string, onProgress?: (progress: number) => void): Promise<boolean> => {
+    const handleEditSubmit = async (name: string, video: File | undefined, startTime: number, endTime: number, isPrivate: boolean, accessKey: string, onProgress?: (progress: number) => void, thumbnail?: File): Promise<boolean> => {
         if (!editVideoItem) return false;
         return updateVideo({
             id: editVideoItem.id,
@@ -44,7 +44,8 @@ export default function VideosPage() {
             endTime,
             isPrivate,
             accessKey,
-            onProgress
+            onProgress,
+            thumbnail
         });
     };
 

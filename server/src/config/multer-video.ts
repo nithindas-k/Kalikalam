@@ -17,4 +17,7 @@ const storage = multer.diskStorage({
     }
 });
 
-export const uploadVideoLocal = multer({ storage }).single("video");
+export const uploadVideoLocal = multer({ storage }).fields([
+    { name: "video", maxCount: 1 },
+    { name: "thumbnail", maxCount: 1 }
+]);

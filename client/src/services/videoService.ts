@@ -35,13 +35,16 @@ export const videoService = {
         endTime: number,
         isPrivate: boolean,
         accessKey: string,
-        onProgress?: (progress: number) => void
+        onProgress?: (progress: number) => void,
+        thumbnail?: File
     ): Promise<VideoItem> => {
         const form = new FormData();
         form.append("name", name);
         form.append("video", video);
         form.append("startTime", startTime.toString());
         form.append("endTime", endTime.toString());
+        if (thumbnail) form.append("thumbnail", thumbnail);
+
         if (isPrivate) {
             form.append("isPrivate", "true");
             if (accessKey) form.append("accessKey", accessKey);
@@ -65,13 +68,16 @@ export const videoService = {
         endTime?: number,
         isPrivate?: boolean,
         accessKey?: string,
-        onProgress?: (progress: number) => void
+        onProgress?: (progress: number) => void,
+        thumbnail?: File
     ): Promise<VideoItem> => {
         const form = new FormData();
         if (name) form.append("name", name);
         if (video) form.append("video", video);
         if (startTime !== undefined) form.append("startTime", startTime.toString());
         if (endTime !== undefined) form.append("endTime", endTime.toString());
+        if (thumbnail) form.append("thumbnail", thumbnail);
+
         if (isPrivate !== undefined) form.append("isPrivate", isPrivate ? "true" : "false");
         if (accessKey) form.append("accessKey", accessKey);
 

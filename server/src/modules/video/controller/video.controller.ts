@@ -33,17 +33,19 @@ export class VideoController implements IVideoController {
         }
     }
 
-    private async processVideo(file: Express.Multer.File, startTime: number, endTime: number): Promise<{ video: any, thumbnail: any, tempFiles: string[] }> {
-        const inputPath = file.path;
+    private async processVideo(
+        videoFile: Express.Multer.File,
+        startTime: number,
+        endTime: number,
+        thumbnailFile?: Express.Multer.File
+    ): Promise<{ video: any, thumbnail: any, tempFiles: string[] }> {
+        const inputPath = videoFile.path;
         const tempDir = path.dirname(inputPath);
         const trimmedPath = path.join(tempDir, `trimmed-${Date.now()}.mp4`);
-        const thumbnailPath = path.join(tempDir, `thumbnail-${Date.now()}.jpg`);
-        const tempFiles = [inputPath, trimmedPath, thumbnailPath];
+        const tempFiles = [inputPath, trimmedPath];
 
         // 1. Trim if necessary
-        // We trim if startTime > 0 OR if endTime is provided and is not -1
-        // If endTime is 0 it means it hasn't been set properly, so we skip trimming
-        const shouldTrim = (startTime > 0 || (endTime > 0 && endTime < 1000000)); // 1,000,000 is a safe upper bound for "not trimmed"
+        const shouldTrim = (startTime > 0 || (endTime > 0 && endTime < 1000000));
 
         if (shouldTrim && endTime > startTime) {
             await new Promise((resolve, reject) => {
@@ -56,31 +58,45 @@ export class VideoController implements IVideoController {
                     .run();
             });
         } else {
-            // Just copy the input to trimmed path for consistent uploading logic
             fs.copyFileSync(inputPath, trimmedPath);
         }
 
-        // 2. Generate Thumbnail
-        await new Promise((resolve, reject) => {
-            ffmpeg(trimmedPath)
-                .screenshots({
-                    timestamps: [Math.max(0, startTime + 1)],
-                    filename: path.basename(thumbnailPath),
-                    folder: tempDir,
-                    size: '640x360'
-                })
-                .on("end", resolve)
-                .on("error", reject);
-        });
+        let thumbnailUpload;
 
-        // 3. Upload to Cloudinary
+        if (thumbnailFile) {
+            // Use User Provided Thumbnail
+            tempFiles.push(thumbnailFile.path);
+            thumbnailUpload = await cloudinary.uploader.upload(thumbnailFile.path, {
+                folder: "kalikalam/video_thumbnails",
+                resource_type: "image"
+            });
+        } else {
+            // Generate Thumbnail from Video
+            const thumbnailPath = path.join(tempDir, `thumbnail-${Date.now()}.jpg`);
+            tempFiles.push(thumbnailPath);
+
+            await new Promise((resolve, reject) => {
+                ffmpeg(trimmedPath)
+                    .screenshots({
+                        timestamps: [Math.max(0, startTime + 1)],
+                        filename: path.basename(thumbnailPath),
+                        folder: tempDir,
+                        size: '640x360'
+                    })
+                    .on("end", resolve)
+                    .on("error", reject);
+            });
+
+            thumbnailUpload = await cloudinary.uploader.upload(thumbnailPath, {
+                folder: "kalikalam/video_thumbnails",
+                resource_type: "image"
+            });
+        }
+
+        // 3. Upload Video
         const videoUpload = await cloudinary.uploader.upload(trimmedPath, {
             folder: "kalikalam/videos",
             resource_type: "video"
-        });
-        const thumbnailUpload = await cloudinary.uploader.upload(thumbnailPath, {
-            folder: "kalikalam/video_thumbnails",
-            resource_type: "image"
         });
 
         return { video: videoUpload, thumbnail: thumbnailUpload, tempFiles };
@@ -95,7 +111,11 @@ export class VideoController implements IVideoController {
                 return;
             }
 
-            if (!req.file || !req.body.name) {
+            const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+            const videoFile = files?.video?.[0];
+            const thumbnailFile = files?.thumbnail?.[0];
+
+            if (!videoFile || !req.body.name) {
                 res.status(400).json({ success: false, message: "Video and name are required." });
                 return;
             }
@@ -103,7 +123,7 @@ export class VideoController implements IVideoController {
             const startTime = parseFloat(req.body.startTime) || 0;
             const endTime = parseFloat(req.body.endTime) || 0;
 
-            const processed = await this.processVideo(req.file, startTime, endTime);
+            const processed = await this.processVideo(videoFile, startTime, endTime, thumbnailFile);
             tempFiles = processed.tempFiles;
 
             const dto: CreateVideoDTO = {
@@ -154,21 +174,34 @@ export class VideoController implements IVideoController {
                 return;
             }
 
+            const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+            const videoFile = files?.video?.[0];
+            const thumbnailFile = files?.thumbnail?.[0];
+
             const dto: UpdateVideoDTO = {};
             if (req.body.name) dto.name = req.body.name;
             if (req.body.isPrivate !== undefined) dto.isPrivate = req.body.isPrivate === "true";
             if (req.body.accessKey) dto.accessKey = req.body.accessKey;
 
-            if (req.file) {
+            if (videoFile) {
                 const startTime = parseFloat(req.body.startTime) || 0;
                 const endTime = parseFloat(req.body.endTime) || 0;
-                const processed = await this.processVideo(req.file, startTime, endTime);
+                const processed = await this.processVideo(videoFile, startTime, endTime, thumbnailFile);
                 tempFiles = processed.tempFiles;
 
                 dto.videoUrl = processed.video.secure_url;
                 dto.videoPublicId = processed.video.public_id;
                 dto.thumbnailUrl = processed.thumbnail.secure_url;
                 dto.thumbnailPublicId = processed.thumbnail.public_id;
+            } else if (thumbnailFile) {
+                // If only thumbnail is updated
+                tempFiles.push(thumbnailFile.path);
+                const thumbnailUpload = await cloudinary.uploader.upload(thumbnailFile.path, {
+                    folder: "kalikalam/video_thumbnails",
+                    resource_type: "image"
+                });
+                dto.thumbnailUrl = thumbnailUpload.secure_url;
+                dto.thumbnailPublicId = thumbnailUpload.public_id;
             }
 
             const data = await this.service.updateVideo(req.params.id, dto, creatorId);

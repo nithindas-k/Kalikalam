@@ -12,6 +12,7 @@ export interface CreateVideoPayload {
     isPrivate: boolean;
     accessKey: string;
     onProgress?: (progress: number) => void;
+    thumbnail?: File;
 }
 
 export interface UpdateVideoPayload {
@@ -23,6 +24,7 @@ export interface UpdateVideoPayload {
     isPrivate?: boolean;
     accessKey?: string;
     onProgress?: (progress: number) => void;
+    thumbnail?: File;
 }
 
 export function useVideos() {
@@ -57,7 +59,8 @@ export function useVideos() {
                 payload.endTime,
                 payload.isPrivate,
                 payload.accessKey,
-                payload.onProgress
+                payload.onProgress,
+                payload.thumbnail
             );
             toast.success("Video uploaded successfully!");
             await fetchVideos();
@@ -78,7 +81,8 @@ export function useVideos() {
                 payload.endTime,
                 payload.isPrivate,
                 payload.accessKey,
-                payload.onProgress
+                payload.onProgress,
+                payload.thumbnail
             );
             toast.success("Video updated successfully!");
             await fetchVideos();
