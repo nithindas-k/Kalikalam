@@ -8,25 +8,25 @@ import RegisterForm from "@/components/admin/RegisterForm";
 export default function RegisterPage() {
     return (
         <AuthLayout>
-            <Card className="w-full bg-[#0a0a0a]/80 border-white/5 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden relative">
+            <Card className="w-full bg-[#0a0a0a]/80 border-white/5 backdrop-blur-xl shadow-2xl rounded-[2rem] overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-500" />
 
-                <CardHeader className="pt-10 pb-6 text-center">
-                    <div className="mx-auto w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10 group hover:border-orange-500/50 transition-all duration-500">
-                        <UserPlus className="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-500" />
+                <CardHeader className="pt-8 pb-4 text-center">
+                    <div className="mx-auto w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mb-3 border border-white/10 group hover:border-orange-500/50 transition-all duration-500">
+                        <UserPlus className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-500" />
                     </div>
-                    <CardTitle className="text-3xl font-bold tracking-tight text-white">Create Admin Account</CardTitle>
-                    <CardDescription className="text-gray-400 mt-2">
+                    <CardTitle className="text-2xl font-bold tracking-tight text-white">Create Admin</CardTitle>
+                    <CardDescription className="text-gray-400 mt-1 text-xs">
                         Enter your credentials to manage Kalikalam
                     </CardDescription>
                 </CardHeader>
 
-                <CardContent className="px-8 pb-8">
+                <CardContent className="px-6 pb-6">
                     <RegisterForm />
                 </CardContent>
 
-                <CardFooter className="pb-10 pt-0 flex justify-center border-t border-white/5 mt-4">
-                    <p className="text-gray-400 text-sm mt-6">
+                <CardFooter className="pb-8 pt-0 flex justify-center border-t border-white/5 mt-2">
+                    <p className="text-gray-400 text-xs mt-4">
                         Already have an account?{" "}
                         <Link to={ROUTES.ADMIN_LOGIN} className="text-orange-400 font-semibold hover:text-orange-300 transition-colors">
                             Sign In

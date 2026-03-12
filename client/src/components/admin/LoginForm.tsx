@@ -29,9 +29,9 @@ export default function LoginForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300 ml-1">Email</Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-gray-300 ml-1 text-xs">Email</Label>
                 <Input
                     id="email"
                     type="email"
@@ -39,14 +39,14 @@ export default function LoginForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
+                    className="bg-white/5 border-white/10 rounded-lg py-5 text-sm focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
                 />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
                 <div className="flex justify-between items-center ml-1">
-                    <Label htmlFor="password" title="password" className="text-gray-300">Password</Label>
-                    <a href="#" className="text-xs text-orange-400 hover:text-orange-300 transition-colors">Forgot?</a>
+                    <Label htmlFor="password" title="password" className="text-gray-300 text-xs">Password</Label>
+                    <a href="#" className="text-[10px] text-orange-400 hover:text-orange-300 transition-colors">Forgot?</a>
                 </div>
                 <Input
                     id="password"
@@ -55,14 +55,14 @@ export default function LoginForm() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
+                    className="bg-white/5 border-white/10 rounded-lg py-5 text-sm focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
                 />
             </div>
 
             <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-7 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-bold text-lg shadow-lg shadow-orange-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full py-6 rounded-lg bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-bold text-base shadow-lg shadow-orange-900/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
             >
                 {isLoading ? (
                     <Loader2 className="w-6 h-6 animate-spin mr-2" />
