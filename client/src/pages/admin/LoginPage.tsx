@@ -32,14 +32,14 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background decorative elements */}
-            <div className="absolute top-[10%] left-[20%] w-[30%] h-[30%] bg-blue-600/10 blur-[120px] rounded-full" />
-            <div className="absolute bottom-[20%] right-[10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full" />
+            <div className="absolute top-[10%] left-[20%] w-[30%] h-[30%] bg-orange-600/10 blur-[120px] rounded-full" />
+            <div className="absolute bottom-[20%] right-[10%] w-[40%] h-[40%] bg-orange-500/5 blur-[120px] rounded-full" />
 
             <Card className="w-full max-w-md bg-[#0a0a0a]/80 border-white/5 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden relative z-10">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-500" />
 
                 <CardHeader className="pt-10 pb-6 text-center">
-                    <div className="mx-auto w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10 group hover:border-blue-500/50 transition-all duration-500">
+                    <div className="mx-auto w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10 group hover:border-orange-500/50 transition-all duration-500">
                         <Lock className="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     <CardTitle className="text-3xl font-bold tracking-tight text-white">Admin Portal</CardTitle>
@@ -59,14 +59,14 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
                             />
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex justify-between items-center ml-1">
                                 <Label htmlFor="password" title="password" className="text-gray-300">Password</Label>
-                                <a href="#" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">Forgot?</a>
+                                <a href="#" className="text-xs text-orange-400 hover:text-orange-300 transition-colors">Forgot?</a>
                             </div>
                             <Input
                                 id="password"
@@ -75,14 +75,14 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
                             />
                         </div>
 
                         <Button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-7 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-lg shadow-lg shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            className="w-full py-7 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-bold text-lg shadow-lg shadow-orange-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {isLoading ? (
                                 <Loader2 className="w-6 h-6 animate-spin mr-2" />
@@ -99,7 +99,7 @@ export default function LoginPage() {
                 <CardFooter className="pb-10 pt-0 flex flex-col items-center border-t border-white/5 mt-4">
                     <p className="text-gray-400 text-sm mt-6">
                         Don't have an admin account?{" "}
-                        <Link to={ROUTES.ADMIN_REGISTER} className="text-blue-400 font-semibold hover:text-blue-300 transition-colors">
+                        <Link to={ROUTES.ADMIN_REGISTER} className="text-orange-400 font-semibold hover:text-orange-300 transition-colors">
                             Register
                         </Link>
                     </p>

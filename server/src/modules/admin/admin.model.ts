@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IAdmin extends Document {
     email: string;
     password: string;
+    status: "approved" | "pending" | "rejected";
 }
 
 const adminSchema: Schema = new Schema(
@@ -18,6 +19,11 @@ const adminSchema: Schema = new Schema(
             type: String,
             required: [true, "Password is required"],
             minlength: [6, "Password must be at least 6 characters"],
+        },
+        status: {
+            type: String,
+            enum: ["approved", "pending", "rejected"],
+            default: "pending",
         },
     },
     {

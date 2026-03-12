@@ -26,9 +26,14 @@ export default function RegisterPage() {
 
         setIsLoading(true);
         try {
-            await authService.register({ email, password });
-            toast.success("Admin registered successfully");
-            navigate(ROUTES.HOME);
+            const data = await authService.register({ email, password });
+            toast.success(data.message || "Admin registered successfully");
+
+            if (data.status === "pending") {
+                navigate(ROUTES.ADMIN_LOGIN);
+            } else {
+                navigate(ROUTES.HOME);
+            }
         } catch (error: any) {
             toast.error(error.response?.data?.message || "Registration failed");
         } finally {
@@ -39,14 +44,14 @@ export default function RegisterPage() {
     return (
         <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background decorative elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/10 blur-[120px] rounded-full animate-pulse" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/5 blur-[120px] rounded-full animate-pulse" />
 
             <Card className="w-full max-w-md bg-[#0a0a0a]/80 border-white/5 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden relative z-10">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-500" />
 
                 <CardHeader className="pt-10 pb-6 text-center">
-                    <div className="mx-auto w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10 group hover:border-purple-500/50 transition-all duration-500">
+                    <div className="mx-auto w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10 group hover:border-orange-500/50 transition-all duration-500">
                         <UserPlus className="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     <CardTitle className="text-3xl font-bold tracking-tight text-white">Create Admin Account</CardTitle>
@@ -66,7 +71,7 @@ export default function RegisterPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
                             />
                         </div>
 
@@ -79,7 +84,7 @@ export default function RegisterPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
                             />
                         </div>
 
@@ -92,14 +97,14 @@ export default function RegisterPage() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
-                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
                             />
                         </div>
 
                         <Button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-7 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-lg shadow-lg shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            className="w-full py-7 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-bold text-lg shadow-lg shadow-orange-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {isLoading ? (
                                 <Loader2 className="w-6 h-6 animate-spin mr-2" />
@@ -116,7 +121,7 @@ export default function RegisterPage() {
                 <CardFooter className="pb-10 pt-0 flex justify-center border-t border-white/5 mt-4">
                     <p className="text-gray-400 text-sm mt-6">
                         Already have an account?{" "}
-                        <Link to={ROUTES.ADMIN_LOGIN} className="text-purple-400 font-semibold hover:text-purple-300 transition-colors">
+                        <Link to={ROUTES.ADMIN_LOGIN} className="text-orange-400 font-semibold hover:text-orange-300 transition-colors">
                             Sign In
                         </Link>
                     </p>

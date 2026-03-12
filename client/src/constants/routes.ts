@@ -4,4 +4,5 @@ export const ROUTES = {
     VIDEOS: "/videos",
     ADMIN_LOGIN: "/admin/login",
     ADMIN_REGISTER: "/admin/register",
+    ADMIN_REQUESTS: "/admin/requests",
 } as const;

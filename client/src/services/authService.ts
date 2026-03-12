@@ -21,6 +21,22 @@ export const authService = {
         return response.data;
     },
 
+    async getPendingAdmins() {
+        const token = this.getToken();
+        const response = await axios.get(`${API_URL}/admin/requests`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    async updateAdminStatus(id: string, status: string) {
+        const token = this.getToken();
+        const response = await axios.put(`${API_URL}/admin/requests/${id}`, { status }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
     logout() {
         localStorage.removeItem("admin_token");
         localStorage.removeItem("admin_data");

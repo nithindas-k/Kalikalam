@@ -5,4 +5,6 @@ export const API_ROUTES = {
     VIDEOS: "/videos",
     VIDEO_BY_ID: "/videos/:id",
     ADMIN: "/admin",
+    ADMIN_REQUESTS: "/admin/requests",
+    ADMIN_STATUS: "/admin/requests/:id",
 } as const;
