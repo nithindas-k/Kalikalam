@@ -5,4 +5,6 @@ export const ROUTES = {
     ADMIN_LOGIN: "/admin/login",
     ADMIN_REGISTER: "/admin/register",
     ADMIN_REQUESTS: "/admin/requests",
+    ADMIN_AUDIOS: "/admin/audios",
+    ADMIN_VIDEOS: "/admin/videos",
 } as const;

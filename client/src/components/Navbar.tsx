@@ -55,7 +55,7 @@ export default function Navbar({ onAddClick }: NavbarProps) {
                             <Link to={ROUTES.ADMIN_REQUESTS}>
                                 <Button variant="ghost" size="sm" className="px-2 h-9 text-xs sm:text-sm text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 gap-1.5">
                                     <Shield className="w-3.5 h-3.5" />
-                                    <span className="hidden lg:inline">Requests</span>
+                                    <span className="hidden lg:inline">Dashboard</span>
                                 </Button>
                             </Link>
                         )}
