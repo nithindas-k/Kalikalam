@@ -4,4 +4,5 @@ export const API_ROUTES = {
     AUDIO_BY_ID: "/audios/:id",
     VIDEOS: "/videos",
     VIDEO_BY_ID: "/videos/:id",
+    ADMIN: "/admin",
 } as const;

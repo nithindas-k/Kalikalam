@@ -4,6 +4,7 @@ import cors from "cors";
 import { connectDB } from "./config/db";
 import audioRoutes from "./modules/audio/audio.routes";
 import videoRoutes from "./modules/video/video.routes";
+import adminRoutes from "./modules/admin/admin.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import { API_ROUTES } from "./constants/routes";
 
@@ -39,6 +40,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(`${API_ROUTES.BASE}${API_ROUTES.AUDIOS}`, audioRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.VIDEOS}`, videoRoutes);
+app.use(`${API_ROUTES.BASE}${API_ROUTES.ADMIN}`, adminRoutes);
 
 
 app.get("/health", (req, res) => {

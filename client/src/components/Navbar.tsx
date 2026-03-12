@@ -1,7 +1,9 @@
-import { Mic2, Plus } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Mic2, Plus, LogOut, Shield } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
+import { authService } from "@/services/authService";
+import { toast } from "sonner";
 
 interface NavbarProps {
     onAddClick?: () => void;
@@ -9,6 +11,14 @@ interface NavbarProps {
 
 export default function Navbar({ onAddClick }: NavbarProps) {
     const location = useLocation();
+    const navigate = useNavigate();
+    const isAdmin = authService.isAuthenticated();
+
+    const handleLogout = () => {
+        authService.logout();
+        toast.info("Logged out successfully");
+        navigate(ROUTES.HOME);
+    };
 
     return (
         <nav className="glass sticky top-0 z-50 w-full">
@@ -40,9 +50,29 @@ export default function Navbar({ onAddClick }: NavbarProps) {
                                 </Button>
                             </Link>
                         )}
+
+                        {isAdmin ? (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="px-2 h-9 text-xs sm:text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5"
+                                onClick={handleLogout}
+                            >
+                                <LogOut className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Logout</span>
+                            </Button>
+                        ) : (
+                            <Link to={ROUTES.ADMIN_LOGIN}>
+                                <Button variant="ghost" size="sm" className="px-2 h-9 text-xs sm:text-sm text-muted-foreground hover:text-foreground gap-1.5">
+                                    <Shield className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Admin</span>
+                                </Button>
+                            </Link>
+                        )}
+
                         <Button
                             size="sm"
-                            className="h-9 px-3 gap-1 sm:gap-1.5 font-semibold"
+                            className="h-9 px-3 gap-1 sm:gap-1.5 font-semibold shadow-lg shadow-primary/20"
                             onClick={onAddClick}
                         >
                             <Plus className="w-3.5 h-3.5" />
