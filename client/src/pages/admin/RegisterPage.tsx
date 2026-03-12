@@ -1,53 +1,14 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { authService } from "@/services/authService";
 import { ROUTES } from "@/constants/routes";
-import { toast } from "sonner";
-import { Shield, UserPlus, ArrowRight, Loader2 } from "lucide-react";
+import { UserPlus } from "lucide-react";
+import AuthLayout from "@/components/admin/AuthLayout";
+import RegisterForm from "@/components/admin/RegisterForm";
 
 export default function RegisterPage() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const navigate = useNavigate();
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (password !== confirmPassword) {
-            toast.error("Passwords do not match");
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            const data = await authService.register({ email, password });
-            toast.success(data.message || "Admin registered successfully");
-
-            if (data.status === "pending") {
-                navigate(ROUTES.ADMIN_LOGIN);
-            } else {
-                navigate(ROUTES.HOME);
-            }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Registration failed");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     return (
-        <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Background decorative elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/10 blur-[120px] rounded-full animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/5 blur-[120px] rounded-full animate-pulse" />
-
-            <Card className="w-full max-w-md bg-[#0a0a0a]/80 border-white/5 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden relative z-10">
+        <AuthLayout>
+            <Card className="w-full bg-[#0a0a0a]/80 border-white/5 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-500" />
 
                 <CardHeader className="pt-10 pb-6 text-center">
@@ -61,61 +22,7 @@ export default function RegisterPage() {
                 </CardHeader>
 
                 <CardContent className="px-8 pb-8">
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-gray-300 ml-1">Email Address</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="name@company.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="password" title="password" className="text-gray-300 ml-1">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword" title="confirm password" className="text-gray-300 ml-1">Confirm Password</Label>
-                            <Input
-                                id="confirmPassword"
-                                type="password"
-                                placeholder="••••••••"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                className="bg-white/5 border-white/10 rounded-xl py-6 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
-                            />
-                        </div>
-
-                        <Button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full py-7 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-bold text-lg shadow-lg shadow-orange-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                        >
-                            {isLoading ? (
-                                <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                            ) : (
-                                <>
-                                    Register Account
-                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                </>
-                            )}
-                        </Button>
-                    </form>
+                    <RegisterForm />
                 </CardContent>
 
                 <CardFooter className="pb-10 pt-0 flex justify-center border-t border-white/5 mt-4">
@@ -127,12 +34,6 @@ export default function RegisterPage() {
                     </p>
                 </CardFooter>
             </Card>
-
-            {/* Bottom floating mark */}
-            <div className="absolute bottom-8 flex items-center gap-2 text-white/20 select-none">
-                <Shield className="w-4 h-4" />
-                <span className="text-xs font-medium tracking-widest uppercase">Kalikalam Security</span>
-            </div>
-        </div>
+        </AuthLayout>
     );
 }
