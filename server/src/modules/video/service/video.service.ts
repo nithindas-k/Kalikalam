@@ -26,12 +26,12 @@ export class VideoService implements IVideoService {
         return VideoMapper.toResponse(doc);
     }
 
-    async updateVideo(id: string, dto: UpdateVideoDTO, creatorId: string): Promise<VideoResponseDTO> {
+    async updateVideo(id: string, dto: UpdateVideoDTO, creatorId: string, isAdmin?: boolean): Promise<VideoResponseDTO> {
         const existing = await this.repo.findById(id);
         if (!existing) throw Object.assign(new Error("Video not found"), { status: 404 });
 
 
-        if (existing.creatorId !== creatorId) {
+        if (!isAdmin && existing.creatorId !== creatorId) {
             throw Object.assign(new Error("You do not have permission to edit this"), { status: 403 });
         }
 
@@ -48,11 +48,11 @@ export class VideoService implements IVideoService {
         return VideoMapper.toResponse(updated);
     }
 
-    async deleteVideo(id: string, creatorId: string): Promise<boolean> {
+    async deleteVideo(id: string, creatorId: string, isAdmin?: boolean): Promise<boolean> {
         const doc = await this.repo.findById(id);
         if (!doc) throw Object.assign(new Error("Video not found"), { status: 404 });
 
-        if (doc.creatorId !== creatorId) {
+        if (!isAdmin && doc.creatorId !== creatorId) {
             throw Object.assign(new Error("You do not have permission to delete this"), { status: 403 });
         }
 

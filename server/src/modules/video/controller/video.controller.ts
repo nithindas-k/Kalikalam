@@ -9,6 +9,7 @@ import ffmpegStatic from "@ffmpeg-installer/ffmpeg";
 import path from "path";
 import fs from "fs";
 import cloudinary from "../../../config/cloudinary";
+import { AuthRequest } from "../../../middlewares/adminAuth.middleware";
 
 ffmpeg.setFfmpegPath(ffmpegStatic.path);
 
@@ -204,7 +205,8 @@ export class VideoController implements IVideoController {
                 dto.thumbnailPublicId = thumbnailUpload.public_id;
             }
 
-            const data = await this.service.updateVideo(req.params.id, dto, creatorId);
+            const isAdmin = !!(req as AuthRequest).admin;
+            const data = await this.service.updateVideo(req.params.id, dto, creatorId, isAdmin);
             res.status(200).json(successResponse("Video updated", data));
         } catch (error) {
             next(error);
@@ -223,7 +225,8 @@ export class VideoController implements IVideoController {
                 return;
             }
 
-            await this.service.deleteVideo(req.params.id, creatorId);
+            const isAdmin = !!(req as AuthRequest).admin;
+            await this.service.deleteVideo(req.params.id, creatorId, isAdmin);
             res.status(200).json(successResponse("Video deleted", null));
         } catch (error) {
             next(error);

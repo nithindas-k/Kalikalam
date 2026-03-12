@@ -8,6 +8,7 @@ import type { VideoItem } from "@/types/video.types";
 import { cn } from "@/lib/utils";
 import { getDeviceId, getUnlockedIds, markAsUnlocked } from "@/utils/device";
 import { videoService } from "@/services/videoService";
+import { authService } from "@/services/authService";
 import { toast } from "sonner";
 
 interface VideoCardProps {
@@ -37,8 +38,9 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
     const [shake, setShake] = useState(false);
     const [isHovering, setIsHovering] = useState(false);
 
+    const isAdmin = authService.isAuthenticated();
     const isOwner = video.creatorId === getDeviceId();
-    const isLocked = video.isPrivate && !isOwner && !isLocalUnlocked;
+    const isLocked = video.isPrivate && !isOwner && !isLocalUnlocked && !isAdmin;
 
     const handleUnlock = async () => {
         if (!accessKeyInput.trim()) return;
@@ -212,7 +214,7 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
                         <h3 className="line-clamp-1 text-sm font-black text-foreground tracking-tight">
                             {video.name}
                         </h3>
-                        {isOwner && video.isPrivate && video.accessKey && (
+                        {(isOwner || isAdmin) && video.isPrivate && video.accessKey && (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -258,7 +260,7 @@ export default function VideoCard({ video, isActive, isPlaying, onPlay, onEdit, 
                         </>
                     )}
                 </Button>
-                {isOwner && (
+                {(isOwner || isAdmin) && (
                     <div className="flex gap-1 text-muted-foreground">
                         <Button
                             variant="outline"

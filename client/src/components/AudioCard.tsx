@@ -8,6 +8,7 @@ import type { AudioItem } from "@/types/audio.types";
 import { cn } from "@/lib/utils";
 import { getDeviceId, getUnlockedIds, markAsUnlocked } from "@/utils/device";
 import { audioService } from "@/services/audioService";
+import { authService } from "@/services/authService";
 import { toast } from "sonner";
 
 interface AudioCardProps {
@@ -36,8 +37,9 @@ export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, 
     const [isLocalUnlocked, setIsLocalUnlocked] = useState(getUnlockedIds().includes(audio.id));
     const [shake, setShake] = useState(false);
 
+    const isAdmin = authService.isAuthenticated();
     const isOwner = audio.creatorId === getDeviceId();
-    const isLocked = audio.isPrivate && !isOwner && !isLocalUnlocked;
+    const isLocked = audio.isPrivate && !isOwner && !isLocalUnlocked && !isAdmin;
 
     const handleUnlock = async () => {
         if (!accessKeyInput.trim()) return;
@@ -161,7 +163,7 @@ export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, 
                         <h3 className="line-clamp-1 text-sm sm:text-base font-black text-foreground tracking-tight">
                             {audio.name}
                         </h3>
-                        {isOwner && audio.isPrivate && audio.accessKey && (
+                        {(isOwner || isAdmin) && audio.isPrivate && audio.accessKey && (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -207,7 +209,7 @@ export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, 
                         </>
                     )}
                 </Button>
-                {isOwner && (
+                {(isOwner || isAdmin) && (
                     <div className="flex gap-1.5 text-muted-foreground">
                         <Button
                             variant="outline"

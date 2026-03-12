@@ -5,6 +5,7 @@ import { CreateAudioDTO } from "../dto/create-audio.dto";
 import { UpdateAudioDTO } from "../dto/update-audio.dto";
 import { successResponse } from "../../../utils/response.util";
 import { MESSAGES } from "../../../constants/messages";
+import { AuthRequest } from "../../../middlewares/adminAuth.middleware";
 
 export class AudioController implements IAudioController {
     constructor(private readonly service: IAudioService) { }
@@ -97,7 +98,8 @@ export class AudioController implements IAudioController {
                 dto.audioPublicId = files["audio"][0].filename;
             }
 
-            const data = await this.service.updateAudio(req.params.id, dto, creatorId);
+            const isAdmin = !!(req as AuthRequest).admin;
+            const data = await this.service.updateAudio(req.params.id, dto, creatorId, isAdmin);
             res.status(200).json(successResponse(MESSAGES.AUDIO_UPDATED, data));
         } catch (error) {
             next(error);
@@ -112,7 +114,8 @@ export class AudioController implements IAudioController {
                 return;
             }
 
-            await this.service.deleteAudio(req.params.id, creatorId);
+            const isAdmin = !!(req as AuthRequest).admin;
+            await this.service.deleteAudio(req.params.id, creatorId, isAdmin);
             res.status(200).json(successResponse(MESSAGES.AUDIO_DELETED, null));
         } catch (error) {
             next(error);

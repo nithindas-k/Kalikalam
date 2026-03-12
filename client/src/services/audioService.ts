@@ -1,4 +1,5 @@
 import axios from "axios";
+import { authService } from "./authService";
 import { getDeviceId } from "@/utils/device";
 import type { AudioItem, CreateAudioPayload, UpdateAudioPayload } from "@/types/audio.types";
 
@@ -8,6 +9,10 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
     config.headers["X-Creator-Id"] = getDeviceId();
+    const token = authService.getToken();
+    if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+    }
     return config;
 });
 
