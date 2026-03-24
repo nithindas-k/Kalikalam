@@ -15,7 +15,7 @@ const storage = new CloudinaryStorage({
         return {
             folder: "kalikalam/audios",
             resource_type: "video",
-            allowed_formats: ["mp3", "wav", "ogg", "m4a"],
+            allowed_formats: ["mp3", "wav", "ogg", "m4a", "webm"],
         };
     },
 } as any);

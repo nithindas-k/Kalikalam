@@ -145,7 +145,58 @@ export default function ChatPage() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId } = useChat();
-    const { recording, startRecording, stopRecording } = useAudioRecorder();
+    const { recording, startRecording, stopRecording, stream } = useAudioRecorder(); // 🎙️ Attached stream
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    // 🔬 Audio Visualizer Effect Loop triggers Node flawlessly
+    useEffect(() => {
+        if (!stream || !canvasRef.current || !recording) return;
+
+        const AudioContextConstructor = window.AudioContext || (window as any).webkitAudioContext;
+        const audioCtx = new AudioContextConstructor();
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64; 
+
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyser);
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        let animationId: number;
+
+        const drawVisualizer = () => {
+            animationId = requestAnimationFrame(drawVisualizer);
+            analyser.getByteFrequencyData(dataArray);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const barWidth = 3;
+            const barGap = 2;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
+                
+                ctx.fillStyle = "#f97316"; // 🟠 Match Theme Glow
+                ctx.fillRect(x, (canvas.height - barHeight) / 2, barWidth, barHeight);
+
+                x += barWidth + barGap;
+            }
+        };
+
+        drawVisualizer();
+
+        return () => {
+            cancelAnimationFrame(animationId);
+            if(audioCtx.state !== 'closed') audioCtx.close();
+        };
+    }, [stream, recording]);
 
     // Image Crop States
     const [tempImage, setTempImage] = useState<string | null>(null);
@@ -397,12 +448,21 @@ export default function ChatPage() {
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
                                 </button>
 
-                                {/* Waveform Preview / Timer */}
+                      
                                 <div className="flex-1 flex items-center gap-3">
                                     {recording ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-                                            <span className="text-sm font-mono tracking-wider">{formatTimer(durationSec)}</span>
+                                        <div className="flex-1 flex items-center gap-3 pr-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-md shadow-red-500/50" />
+                                                <span className="text-sm font-mono tracking-wider text-pink-500">{formatTimer(durationSec)}</span>
+                                            </div>
+                                          
+                                            <canvas 
+                                                ref={canvasRef} 
+                                                width={160} 
+                                                height={24} 
+                                                className="flex-1 h-6 bg-transparent" 
+                                            />
                                         </div>
                                     ) : (
                                         // WhatsApp style preview player
@@ -417,7 +477,7 @@ export default function ChatPage() {
                                     <Button
                                         size="icon"
                                         onClick={handleMicToggle}
-                                        className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                                        className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-lg shadow-red-500/40"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
                                     </Button>
@@ -425,7 +485,7 @@ export default function ChatPage() {
                                     <Button
                                         size="icon"
                                         onClick={handleSendVoice}
-                                        className="w-9 h-9 rounded-full bg-orange-500 hover:bg-orange-400 text-black shadow-md shadow-orange-500/30"
+                                        className="w-9 h-9 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/40 transition-transform active:scale-95"
                                     >
                                         <Send className="w-3.5 h-3.5" />
                                     </Button>

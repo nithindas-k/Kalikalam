@@ -3,13 +3,16 @@ import { useRef, useState, useCallback } from "react";
 export function useAudioRecorder() {
     const [recording, setRecording] = useState(false);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+    const [stream, setStream] = useState<MediaStream | null>(null); // 🎙️ Stream state for visualization
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
 
     const startRecording = useCallback(async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+            const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            setStream(micStream);
+            
+            const recorder = new MediaRecorder(micStream, { mimeType: "audio/webm" });
             chunksRef.current = [];
 
             recorder.ondataavailable = (e) => {
@@ -19,7 +22,8 @@ export function useAudioRecorder() {
             recorder.onstop = () => {
                 const blob = new Blob(chunksRef.current, { type: "audio/webm" });
                 setAudioBlob(blob);
-                stream.getTracks().forEach((t) => t.stop());
+                micStream.getTracks().forEach((t) => t.stop());
+                setStream(null);
             };
 
             mediaRecorderRef.current = recorder;
@@ -39,6 +43,7 @@ export function useAudioRecorder() {
                 const blob = new Blob(chunksRef.current, { type: "audio/webm" });
                 setAudioBlob(blob);
                 recorder.stream?.getTracks().forEach((t) => t.stop());
+                setStream(null); 
                 resolve(blob);
             };
 
@@ -49,5 +54,5 @@ export function useAudioRecorder() {
 
     const clearAudio = useCallback(() => setAudioBlob(null), []);
 
-    return { recording, audioBlob, startRecording, stopRecording, clearAudio };
+    return { recording, audioBlob, stream, startRecording, stopRecording, clearAudio };
 }
