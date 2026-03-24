@@ -56,6 +56,7 @@ const io = new SocketIOServer(httpServer, {
         origin: true,   // allow all origins — no cookie auth needed for chat
         methods: ["GET", "POST"],
     },
+    maxHttpBufferSize: 2e7, // 20 MB buffer allowance for base64 media uploads
 });
 
 // ─── Chat Message interface ───────────────────────────────────────────────────
