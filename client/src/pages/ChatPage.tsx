@@ -176,15 +176,19 @@ export default function ChatPage() {
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const barWidth = 3;
-            const barGap = 2;
+            const barWidth = 2; // 📐 Sleeker thinner bars
+            const barGap = 1.5; // 📐 tighter gap
             let x = 0;
 
             for (let i = 0; i < bufferLength; i++) {
-                const barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
+                // Node frequency response
+                const barHeight = (dataArray[i] / 255) * canvas.height * 0.7;
                 
-                ctx.fillStyle = "#f97316"; // 🟠 Match Theme Glow
-                ctx.fillRect(x, (canvas.height - barHeight) / 2, barWidth, barHeight);
+                // 🎨 Soft Gray/White Minimal setup layout Node Node flawlessly setup
+                ctx.fillStyle = "rgba(255, 255, 255, 0.45)"; 
+                
+                // 📐 Draw centered bars with absolute minimum height baseline flaws
+                ctx.fillRect(x, (canvas.height - Math.max(barHeight, 3)) / 2, barWidth, Math.max(barHeight, 3));
 
                 x += barWidth + barGap;
             }
