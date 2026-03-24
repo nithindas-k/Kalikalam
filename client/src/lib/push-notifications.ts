@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 function urlBase64ToUint8Array(base64String: string) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -31,8 +31,15 @@ export async function registerPushNotifications(userId: string) {
             return;
         }
 
+        console.log("🔔 Fetching VAPID key from:", `${API_BASE_URL}/push/vapid-public-key`);
         const keyResponse = await fetch(`${API_BASE_URL}/push/vapid-public-key`);
-        const { publicKey } = await keyResponse.json();
+        
+        if (!keyResponse.ok) {
+            throw new Error(`Failed to fetch VAPID key: ${keyResponse.status} ${keyResponse.statusText}`);
+        }
+
+        const data = await keyResponse.json();
+        const publicKey = data.publicKey;
 
         let subscription = await registration.pushManager.getSubscription();
         if (!subscription) {

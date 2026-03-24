@@ -43,9 +43,9 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
  
 app.use(`${API_ROUTES.BASE}${API_ROUTES.AUDIOS}`, audioRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.VIDEOS}`, videoRoutes);
-app.use(`${API_ROUTES.BASE}${API_ROUTES.ADMIN}`, adminRoutes);
-app.use(`${API_ROUTES.BASE}/auth`, authRoutes);
-app.use(`${API_ROUTES.BASE}/push`, pushRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/push", pushRoutes);
 
 
 import { upload } from "./config/multer";
