@@ -73,7 +73,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         socket.on("connect", () => {
             console.log("🎙️ Socket connected to voice server", socket.id);
             if (sessionStorage.getItem("voice_active") === "true") {
-                emitJoin();
+                joinVoice().catch(console.error);
             }
         });
 
@@ -87,7 +87,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         });
 
         socket.on("voice:user-joined", async (data: { socketId: string; name: string }) => {
-            console.log(`🎙️ New peer joined: ${data.name}`);
+            console.log(`🎙️ New peer joined: ${data.name} (${data.socketId})`);
             await createPeerConnection(data.socketId, true);
         });
 
@@ -100,6 +100,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
                         setTimeout(() => handleSignal(data), 100);
                         return;
                     }
+                    console.log(`🤝 Received signal from ${data.from}, creating PeerConnection`);
                     pc = await createPeerConnection(data.from, false);
                 }
 
@@ -136,14 +137,9 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             closePeerConnection(socketId);
         });
 
-        if (sessionStorage.getItem("voice_active") === "true") {
-            setTimeout(() => {
-                joinVoice().catch(console.error);
-            }, 1000);
-        }
-
         return () => {
             socket.disconnect();
+            peerConnections.current.forEach((_, id) => closePeerConnection(id));
         };
     }, []);
 
@@ -175,6 +171,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             if (!audio) {
                 audio = document.createElement("audio");
                 audio.autoplay = true;
+                (audio as any).playsInline = true;
                 audio.style.display = "none";
                 document.body.appendChild(audio);
                 remoteAudiosRef.current.set(targetSocketId, audio);
@@ -191,6 +188,17 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             playAudio();
         };
 
+        pc.oniceconnectionstatechange = () => {
+            console.log(`🧊 ICE State for ${targetSocketId}: ${pc.iceConnectionState}`);
+            if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
+                setTimeout(() => {
+                    if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
+                        closePeerConnection(targetSocketId);
+                    }
+                }, 3000);
+            }
+        };
+
         pc.onconnectionstatechange = () => {
             if (pc.connectionState === "disconnected" || pc.connectionState === "failed" || pc.connectionState === "closed") {
                 closePeerConnection(targetSocketId);
@@ -198,9 +206,13 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         };
 
         if (isOfferor) {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socketRef.current?.emit("voice:signal", { to: targetSocketId, signal: { sdp: pc.localDescription } });
+            try {
+                const offer = await pc.createOffer({ offerToReceiveAudio: true });
+                await pc.setLocalDescription(offer);
+                socketRef.current?.emit("voice:signal", { to: targetSocketId, signal: { sdp: pc.localDescription } });
+            } catch (err) {
+                console.error("Failed to create offer:", err);
+            }
         }
 
         return pc;
@@ -209,6 +221,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
     const closePeerConnection = (socketId: string) => {
         const pc = peerConnections.current.get(socketId);
         if (pc) {
+            console.log(`🔌 Closing connection for ${socketId}`);
             pc.close();
             peerConnections.current.delete(socketId);
         }
@@ -219,21 +232,30 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             remoteAudiosRef.current.delete(socketId);
         }
         iceCandidatesQueue.current.delete(socketId);
+        pendingConnections.current.delete(socketId);
     };
 
     const joinVoice = async () => {
-        if (isConnectedRef.current) {
+        if (isConnectedRef.current && localStreamRef.current) {
             emitJoin();
             return;
         }
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log("🎤 Getting local media stream...");
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                } 
+            });
             localStreamRef.current = stream;
             setIsConnected(true);
             emitJoin();
         } catch (err) {
             console.error("Failed to get mic stream:", err);
             sessionStorage.removeItem("voice_active");
+            setIsConnected(false);
         }
     };
 
