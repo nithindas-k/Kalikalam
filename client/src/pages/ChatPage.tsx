@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { ArrowLeft, Send, Mic, MicOff, ImagePlus, User, Wifi, WifiOff, ChevronDown, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Mic, ImagePlus, User, Wifi, WifiOff, ChevronDown, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/hooks/useChat";

@@ -1,6 +1,5 @@
-import { Mic2, LogOut, Shield, User, MessageCircle, Play } from "lucide-react";
+import { Mic2, LogOut, Shield, User, MessageCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { authService } from "@/services/authService";
