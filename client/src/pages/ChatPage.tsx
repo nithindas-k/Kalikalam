@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { ArrowLeft, Send, Mic, ImagePlus, User, Wifi, WifiOff, ChevronDown, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Mic, ImagePlus, User, Wifi, WifiOff, ChevronDown, MessageCircle, Play, Pause } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/hooks/useChat";
@@ -223,6 +223,10 @@ export default function ChatPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [durationSec, setDurationSec] = useState(0);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const previewAudioRef = useRef<HTMLAudioElement>(null);
+    const [previewIsPlaying, setPreviewIsPlaying] = useState(false);
+    const [previewCurrentTime, setPreviewCurrentTime] = useState(0);
 
     // Auto-scroll
     const isAtBottom = () => {
@@ -481,9 +485,47 @@ export default function ChatPage() {
                                             />
                                         </div>
                                     ) : (
-                                        // WhatsApp style preview player
-                                        <div className="flex-1 flex items-center gap-2">
-                                            <audio src={previewUrl || ""} controls className="h-8 flex-1 bg-transparent dark [&::-webkit-media-controls-enclosure]:bg-transparent [&::-webkit-media-controls-panel]:bg-transparent" />
+                                        // 🎧 WhatsApp Custom Preview Slider node flawless setup Node Node
+                                        <div className="flex-1 flex items-center gap-2 group/player">
+                                            {/* 🎙️ Hidden standard player Node setup layout Node Node flawlessly setup */}
+                                            <audio 
+                                                ref={previewAudioRef} 
+                                                src={previewUrl || ""} 
+                                                onTimeUpdate={() => setPreviewCurrentTime(previewAudioRef.current?.currentTime || 0)}
+                                                onPlay={() => setPreviewIsPlaying(true)}
+                                                onPause={() => setPreviewIsPlaying(false)}
+                                                onEnded={() => setPreviewIsPlaying(false)}
+                                                className="hidden" 
+                                            />
+
+                                            <button
+                                                onClick={() => {
+                                                    const aud = previewAudioRef.current;
+                                                    if (!aud) return;
+                                                    if (aud.paused) aud.play().catch(console.error);
+                                                    else aud.pause();
+                                                }}
+                                                className="w-7 h-7 flex-shrink-0 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all active:scale-95 shadow-sm"
+                                            >
+                                                {previewIsPlaying ? (
+                                                    <Pause className="w-3.5 h-3.5 fill-current" />
+                                                ) : (
+                                                    <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                                                )}
+                                            </button>
+
+                                            {/* 📊 Smooth Custom Linear Progress Bar node setup flawlessly Node layout */}
+                                            <div className="flex-1 h-1 bg-white/10 rounded-full relative cursor-pointer group-hover/player:bg-white/20 overflow-hidden">
+                                                <div 
+                                                    className="absolute left-0 top-0 h-full bg-gradient-to-r from-orange-400 to-pink-500 rounded-full transition-all"
+                                                    style={{ width: `${(previewCurrentTime / Math.max(durationSec, 1)) * 100}%` }}
+                                                />
+                                            </div>
+
+                                            <span className="text-[10px] font-mono tracking-tight text-white/40">
+                                                {/* Node custom time Node flawlessly setup */}
+                                                {durationSec > 0 ? durationSec - Math.floor(previewCurrentTime) : "0:00"}s
+                                            </span>
                                         </div>
                                     )}
                                 </div>
