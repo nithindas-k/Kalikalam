@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap, GeoJSON, Popup } from "react-l
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { motion } from "framer-motion";
-import { ChevronRight, Map as MapIcon, Users } from "lucide-react";
+import { ChevronRight, Map as MapIcon, Users, RefreshCw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 
@@ -33,13 +33,31 @@ const createAvatarIcon = (url: string, isSelected: boolean) => {
 };
 
 export default function StatusPage() {
-  const { user } = useAuth();
+  const { user, syncLocation } = useAuth();
   const [members, setMembers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [view, setView] = useState<"world" | "india" | "kerala">("world");
   const [activeTab, setActiveTab] = useState<"map" | "list">("map"); // Mobile Toggler
   const [indiaGeo, setIndiaGeo] = useState<any>(null);
   const [keralaGeo, setKeralaGeo] = useState<any>(null);
+
+  const fetchUsers = async () => {
+    try {
+        const res = await fetch("http://localhost:5000/api/auth");
+        if (res.ok) {
+            const data = await res.json();
+            setMembers(data);
+        }
+    } catch (e) { console.error("API error", e); }
+  };
+
+  const handleSyncLocation = () => {
+    if (user?.id) {
+        syncLocation(user.id);
+        // Refresh list slightly after to catch some changes
+        setTimeout(fetchUsers, 3000); 
+    }
+  };
 
   // --- 🛰️ CONTINUOUS HUB ENGINE ---
   useEffect(() => {
@@ -52,16 +70,6 @@ export default function StatusPage() {
           setIndiaGeo(await indiaRes.json());
           setKeralaGeo(await keralaRes.json());
        } catch (e) { console.error("GeoJSON error", e); }
-    };
-
-    const fetchUsers = async () => {
-       try {
-          const res = await fetch("http://localhost:5000/api/auth");
-          if (res.ok) {
-             const data = await res.json();
-             setMembers(data);
-          }
-       } catch (e) { console.error("API error", e); }
     };
 
     loadGeoData();
@@ -207,11 +215,32 @@ export default function StatusPage() {
                       onClick={() => setView(view === 'world' ? 'india' : view === 'india' ? 'kerala' : 'world')}>
                     <span className="text-[7px] text-neutral-500 uppercase font-black tracking-widest block mb-2">Region</span>
                     <span className="text-2xl font-black text-emerald-500 capitalize">{view}</span>
-                 </div>
-              </div>
-           </div>
+               </div>
+            </div>
+         </div>
 
-           <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-3 custom-scrollbar">
+            {/* 📍 UPDATE LOCATION ACTION */}
+            {user && (
+               <div className="px-8 mb-6">
+                  <button 
+                  onClick={handleSyncLocation}
+                  className="w-full p-4 rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-between group hover:bg-orange-500/20 transition-all active:scale-[0.98]"
+                  >
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                           <RefreshCw className="w-5 h-5 text-black group-hover:rotate-180 transition-transform duration-700" />
+                        </div>
+                        <div className="text-left">
+                           <span className="text-[10px] font-black uppercase text-white tracking-widest block leading-none mb-1">Update Hub</span>
+                           <span className="text-[8px] font-bold text-orange-400 uppercase tracking-widest opacity-60">Sync My GPS</span>
+                        </div>
+                     </div>
+                     <ChevronRight className="w-4 h-4 text-orange-500/50" />
+                  </button>
+               </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-3 custom-scrollbar">
               {members.map(m => (
                 <motion.div
                   key={m._id}

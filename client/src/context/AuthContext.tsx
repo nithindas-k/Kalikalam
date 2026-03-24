@@ -23,6 +23,7 @@ interface AuthContextType {
     login: (token: string, userData: User) => void;
     logout: () => void;
     updateUser: (updatedUser: User) => void;
+    syncLocation: (uid: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,13 +76,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 } catch (e) { console.warn("Reverse geocode failed", e); }
 
                 try {
-                    await fetch(`http://localhost:5000/api/auth/profile/${uid}`, {
+                    const response = await fetch(`http://localhost:5000/api/auth/profile/${uid}`, {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ 
                            location: { ...locationDetails, lat: latitude, lng: longitude } 
                         })
                     });
+                    if (response.ok) {
+                        const updatedData = await response.json();
+                        // Update local user state if it's the current user
+                        if (user && user.id === uid) {
+                            updateUser(updatedData);
+                        }
+                    }
                 } catch (e) {
                     console.error("Auto-location sync failed", e);
                 }
@@ -112,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser }}>
+        <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser, syncLocation }}>
             {children}
         </AuthContext.Provider>
     );
