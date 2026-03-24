@@ -46,8 +46,20 @@ export function useChat() {
         };
         const onHistory = (history: ChatMessage[]) => setMessages(history);
         const onMessage = (msg: ChatMessage) => {
-            console.log("📨 Received message:", msg);
+            console.log("Receive Broadcast 📨:", msg);
             setMessages((prev) => {
+                // If this is OUR own message returning from the server, 
+                // replace the optimistic one with the real one.
+                const isOwn = msg.senderId === getDeviceId();
+                if (isOwn) {
+                    const optimisticIndex = prev.findIndex(m => m.id.startsWith("optimistic-") && m.content === msg.content);
+                    if (optimisticIndex !== -1) {
+                        const next = [...prev];
+                        next[optimisticIndex] = msg; // Update with real DB ID
+                        return next;
+                    }
+                }
+
                 if (prev.some((m) => m.id === msg.id)) return prev;
                 return [...prev, msg];
             });
@@ -89,15 +101,32 @@ export function useChat() {
     const sendMessage = useCallback(
         (type: ChatMessage["type"], content: string) => {
             if (!content.trim()) return;
-            const payload = {
+
+            // 1. Create Optimistic Message Payload immediately
+            const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+            const payload: ChatMessage = {
+                id: optimisticId,
                 senderId: getDeviceId(),
                 senderName: localStorage.getItem("visitor_name") || "Anonymous",
                 senderImage: localStorage.getItem("visitor_image") || "",
                 type,
-                content,
+                content: content.trim(),
+                timestamp: new Date().toISOString(),
             };
+
+            // 2. Append directly to local UI state for absolute zero-delay
+            setMessages((prev) => [...prev, payload]);
+
             console.log("📤 Emitting chat:send", payload);
-            socketRef.current?.emit("chat:send", payload);
+
+            // 3. Emit Omit IDs and match server signature
+            socketRef.current?.emit("chat:send", {
+                senderId: payload.senderId,
+                senderName: payload.senderName,
+                senderImage: payload.senderImage,
+                type: payload.type,
+                content: payload.content,
+            });
         },
         []
     );
