@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 } catch (e) { console.warn("Reverse geocode failed", e); }
 
                 try {
-                    const response = await fetch(`http://localhost:5000/api/auth/profile/${uid}`, {
+                    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/auth/profile/${uid}`, {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ 
