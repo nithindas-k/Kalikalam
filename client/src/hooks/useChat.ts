@@ -20,9 +20,8 @@ export function useChat() {
         if (!token) return;
 
         const socketInstance = io(SOCKET_URL, {
-            transports: ["websocket"],
             reconnection: true,
-            auth: { token }, // 🔒 Send token to backend
+            auth: { token },
         });
 
         setSocket(socketInstance);
@@ -51,10 +50,26 @@ export function useChat() {
             });
         };
 
-        socketInstance.on("connect", () => setConnected(true));
-        socketInstance.on("disconnect", () => setConnected(false));
-        socketInstance.on("chat:history", onHistory);
-        socketInstance.on("chat:message", onMessage);
+        socketInstance.on("connect", () => {
+            console.log("✅ Socket Connected successfully!");
+            setConnected(true);
+        });
+        socketInstance.on("connect_error", (err) => {
+            console.error("🚨 Socket Connection Error:", err);
+        });
+        socketInstance.on("disconnect", (reason) => {
+            console.log("🔴 Socket Disconnected:", reason);
+            setConnected(false);
+        });
+        
+        socketInstance.on("chat:history", (h) => {
+            console.log("📜 Received history:", h.length);
+            onHistory(h);
+        });
+        socketInstance.on("chat:message", (m) => {
+            console.log("💬 Received Live Message:", m);
+            onMessage(m);
+        });
         socketInstance.on("chat:online", (count) => setOnlineCount(count));
         socketInstance.on("chat:typing", onTyping);
 

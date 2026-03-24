@@ -9,14 +9,12 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ImageCropDialog from "@/components/ImageCropDialog";
 
-// ─── Message Bubble ────────────────────────────────────────────────────────────
 function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
     const timeStr = new Date(msg.timestamp).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
     });
 
-    // Custom Audio Player State
     const audioRef = useRef<HTMLAudioElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
