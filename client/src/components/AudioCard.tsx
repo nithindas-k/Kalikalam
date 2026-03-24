@@ -113,28 +113,29 @@ export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, 
                 ) : (
                     /* Locked UI - Premium Redesign */
                     <div className={cn(
-                        "absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-5 text-center transition-all duration-500",
+                        "absolute inset-0 flex flex-col items-center justify-center p-2 sm:p-5 text-center transition-all duration-500",
                         shake && "shake-anim bg-destructive/10 backdrop-blur-3xl",
-                        !shake && "bg-black/80 backdrop-blur-[2px]"
+                        !shake && "bg-black/85 backdrop-blur-[4px]"
                     )}>
-                        <div className="absolute top-0 right-0 p-2 opacity-5">
+                        {/* Background Lock Icon - Hidden on small mobile cards to save space */}
+                        <div className="absolute top-0 right-0 p-2 opacity-5 hidden sm:block">
                             <Lock className="h-32 w-32 text-white -mr-12 -mt-12" />
                         </div>
 
-                        <div className="mb-3 rounded-full bg-white/5 p-3 backdrop-blur-xl border border-white/10 shadow-2xl transition-transform hover:scale-110 duration-500">
-                            <Lock className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-in zoom-in duration-700" />
+                        <div className="mb-2 sm:mb-3 rounded-full bg-primary/10 p-2 sm:p-3.5 backdrop-blur-2xl border border-primary/20 shadow-2xl transition-transform hover:scale-110 duration-500">
+                            <Lock className="h-5 w-5 sm:h-7 sm:w-7 text-primary animate-in zoom-in duration-700" />
                         </div>
 
-                        <h4 className="mb-1 text-[12px] sm:text-xs font-black text-white uppercase tracking-[0.3em] opacity-80">Private Vault</h4>
-                        <p className="mb-4 text-[9px] text-white/40 italic px-4 leading-tight font-medium">Enter secret key to unlock</p>
+                        <h4 className="mb-0.5 sm:mb-1 text-[11px] sm:text-sm font-black text-white uppercase tracking-[0.2em]">Private Vault</h4>
+                        <p className="mb-3 sm:mb-5 text-[9px] sm:text-[10px] text-white/40 italic px-2 leading-tight font-semibold">Enter key below</p>
 
-                        <div className="flex w-full flex-col gap-2.5 max-w-[140px] sm:max-w-[170px]">
+                        <div className="flex w-full flex-col gap-2 sm:gap-3 max-w-[140px] sm:max-w-[180px]">
                             <div className="relative group/input">
-                                <Key className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-primary/40 group-focus-within/input:text-primary transition-colors" />
+                                <Key className="absolute left-2 top-2 h-3.5 w-3.5 text-primary/40 group-focus-within/input:text-primary transition-colors" />
                                 <Input
                                     type="password"
-                                    placeholder="Enter Key"
-                                    className="h-9 sm:h-10 border-white/10 bg-black/60 pl-8 sm:pl-9 text-xs text-white placeholder:text-white/20 backdrop-blur-xl focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all rounded-xl"
+                                    placeholder="Secret Key"
+                                    className="h-8 sm:h-10 border-white/10 bg-black/80 pl-8 sm:pl-10 text-[10px] sm:text-xs text-white placeholder:text-white/20 backdrop-blur-xl focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all rounded-xl"
                                     value={accessKeyInput}
                                     onChange={(e) => setAccessKeyInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
@@ -143,14 +144,14 @@ export default function AudioCard({ audio, isActive, isPlaying, onPlay, onEdit, 
                             </div>
                             <Button
                                 size="sm"
-                                className="h-9 sm:h-10 w-full text-[10px] sm:text-xs font-black shadow-lg shadow-primary/20 transition-all active:scale-95 uppercase tracking-widest bg-primary text-black hover:bg-primary/90 rounded-xl"
+                                className="h-8 sm:h-10 w-full text-[10px] sm:text-[11px] font-black shadow-lg shadow-primary/20 transition-all active:scale-95 uppercase tracking-[0.2em] bg-primary text-black hover:bg-primary/90 rounded-xl"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleUnlock();
                                 }}
                                 disabled={isUnlocking}
                             >
-                                {isUnlocking ? "..." : "Unlock"}
+                                {isUnlocking ? "..." : "Unlock Access"}
                             </Button>
                         </div>
                     </div>
