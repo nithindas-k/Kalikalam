@@ -11,8 +11,32 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import ImageCropDialog from "@/components/ImageCropDialog";
+import UserProfileModal from "@/components/UserProfileModal";
 
-function MessageBubble({ msg, isOwn, onDelete }: { msg: ChatMessage; isOwn: boolean; onDelete?: () => void }) {
+const renderMessageContent = (content: string, allUsers: any[], onUserClick: (name: string) => void) => {
+    if (!content) return null;
+    const parts = content.split(/(@\w+)/g);
+    return parts.map((part, index) => {
+        if (part.startsWith("@")) {
+            const userName = part.slice(1);
+            const userExists = allUsers.some(u => u.name.toLowerCase() === userName.toLowerCase());
+            if (userExists) {
+                return (
+                    <button
+                        key={index}
+                        onClick={(e) => { e.stopPropagation(); onUserClick(userName); }}
+                        className="text-orange-400 font-bold bg-orange-500/10 px-1 rounded-md hover:bg-orange-500/20 transition-all cursor-pointer underline-offset-1 hover:underline mx-0.5 inline-block"
+                    >
+                        {part}
+                    </button>
+                );
+            }
+        }
+        return part;
+    });
+};
+
+function MessageBubble({ msg, isOwn, onDelete, allUsers, onUserClick }: { msg: ChatMessage; isOwn: boolean; onDelete?: () => void; allUsers: any[]; onUserClick: (name: string) => void }) {
     const timeStr = new Date(msg.timestamp).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -88,7 +112,7 @@ function MessageBubble({ msg, isOwn, onDelete }: { msg: ChatMessage; isOwn: bool
                         msg.type === "image" && "bg-transparent border-0 shadow-none"
                     )}
                 >
-                    {msg.type === "text" && <p className="break-words whitespace-pre-wrap">{msg.content}</p>}
+                    {msg.type === "text" && <p className="break-words whitespace-pre-wrap">{renderMessageContent(msg.content, allUsers, onUserClick)}</p>}
 
                     {msg.type === "image" && (
                         <img
@@ -160,7 +184,17 @@ export default function ChatPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId, loadingHistory, deleteMessage, allUsers } = useChat();
+    const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId, loadingHistory, deleteMessage, allUsers, onlineUsers } = useChat();
+    const [selectedMentionUser, setSelectedMentionUser] = useState<{ name: string; image?: string } | null>(null);
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
+
+    const handleMentionClick = (userName: string) => {
+        const foundUser = allUsers.find(u => u.name.toLowerCase() === userName.toLowerCase());
+        if (foundUser) {
+            setSelectedMentionUser(foundUser);
+            setProfileModalOpen(true);
+        }
+    };
     const { recording, startRecording, stopRecording, stream } = useAudioRecorder(); 
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -462,7 +496,9 @@ export default function ChatPage() {
                             key={msg.id} 
                             msg={msg} 
                             isOwn={msg.senderId === senderId} 
-                            onDelete={() => deleteMessage(msg.id)} // 🗑️ Delete trigger Node Node 
+                            onDelete={() => deleteMessage(msg.id)}
+                            allUsers={allUsers}
+                            onUserClick={handleMentionClick}
                         />
                     ))}
 
@@ -701,6 +737,16 @@ export default function ChatPage() {
                     }}
                     onCropComplete={handleCropComplete}
                     aspectRatio={4 / 3} // Wide crop for layout feed
+                />
+            )}
+
+            {/* User Mention Profile Modal setup flags flaws flawlessly layout flawlessly layout setup flawless setup flawless layout status flawlessly layout flaws setup flawlessly Node layout flawless setup Node header flawlessly setup flaws flawless Node flawless */}
+            {selectedMentionUser && (
+                <UserProfileModal
+                    open={profileModalOpen}
+                    onClose={() => setProfileModalOpen(false)}
+                    user={selectedMentionUser}
+                    isOnline={onlineUsers?.includes(selectedMentionUser.name)}
                 />
             )}
         </div>
