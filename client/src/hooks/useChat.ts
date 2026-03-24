@@ -7,7 +7,7 @@ const SOCKET_URL = import.meta.env.VITE_API_BASE_URL
     ? import.meta.env.VITE_API_BASE_URL.replace("/api", "")
     : "http://localhost:5000";
 
-// ─── Module-level singleton — survives React Strict Mode double-mount ─────────
+
 let _socket: Socket | null = null;
 
 function getOrCreateSocket(): Socket {

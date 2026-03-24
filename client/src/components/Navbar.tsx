@@ -1,4 +1,4 @@
-import { Mic2, Plus, LogOut, Shield, User, MessageCircle } from "lucide-react";
+import { Mic2, LogOut, Shield, User, MessageCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,7 @@ import { ROUTES } from "@/constants/routes";
 import { authService } from "@/services/authService";
 import { toast } from "sonner";
 
-interface NavbarProps {
-    onAddClick?: () => void;
-}
-
-export default function Navbar({ onAddClick }: NavbarProps) {
+export default function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
     const isAdmin = authService.isAuthenticated();
