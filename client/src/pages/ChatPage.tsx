@@ -6,6 +6,9 @@ import { useChat } from "@/hooks/useChat";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import type { ChatMessage } from "@/types/chat.types";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import ImageCropDialog from "@/components/ImageCropDialog";
 
@@ -597,38 +600,39 @@ export default function ChatPage() {
                                 )}
                             </div>
                         ) : (
-                            /* ─── STAGE 0: Standard Text Input ────────────────────────── */
+                           
                             <>
-                                {/* ─── 👥 Mentions Suggestion Popover Node flawless Setup Node Node flaws node flawlessly layout */}
+                                
                                 {showMentions && (
-                                    <div className="absolute bottom-full left-0 right-0 mb-3 mx-4 p-2 bg-[#121212]/95 border border-white/[0.08] backdrop-blur-xl rounded-2xl max-h-48 overflow-y-auto shadow-2xl space-y-1 z-20">
-                                        {allUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).length === 0 ? (
-                                            <div className="text-[11px] text-white/30 text-center py-3">No matching users</div>
-                                        ) : (
-                                            allUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).map(u => (
-                                                <div
-                                                    key={u.name}
-                                                    onClick={() => {
-                                                        const lastAt = text.lastIndexOf("@");
-                                                        const before = text.substring(0, lastAt);
-                                                        handleTextChange(before + `@${u.name} `);
-                                                        setShowMentions(false);
-                                                        textareaRef.current?.focus();
-                                                    }}
-                                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors text-left"
-                                                >
-                                                    <div className="w-6 h-6 rounded-full overflow-hidden border border-white/10 bg-white/5 flex items-center justify-center">
-                                                        {u.image ? (
-                                                            <img src={u.image} alt={u.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <User className="w-3 h-3 text-white/40" />
-                                                        )}
-                                                    </div>
-                                                    <span className="text-sm text-white/90 font-medium">@{u.name}</span>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
+                                    <Card className="absolute bottom-full left-0 right-0 mb-3 mx-4 p-1.5 bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-20 overflow-hidden">
+                                        <ScrollArea className="h-44">
+                                            <div className="space-y-1">
+                                                {allUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).length === 0 ? (
+                                                    <div className="text-[11px] text-white/30 text-center py-3">No matching users</div>
+                                                ) : (
+                                                    allUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).map(u => (
+                                                        <div
+                                                            key={u.name}
+                                                            onClick={() => {
+                                                                const lastAt = text.lastIndexOf("@");
+                                                                const before = text.substring(0, lastAt);
+                                                                handleTextChange(before + `@${u.name} `);
+                                                                setShowMentions(false);
+                                                                textareaRef.current?.focus();
+                                                            }}
+                                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors text-left"
+                                                        >
+                                                            <Avatar className="w-6 h-6 border border-white/10">
+                                                                {u.image ? <AvatarImage src={u.image} alt={u.name} className="object-cover" /> : null}
+                                                                <AvatarFallback className="bg-white/5"><User className="w-3 h-3 text-white/40" /></AvatarFallback>
+                                                            </Avatar>
+                                                            <span className="text-sm text-white/90 font-medium">@{u.name}</span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </ScrollArea>
+                                    </Card>
                                 )}
 
                                 {/* Image */}
