@@ -17,6 +17,7 @@ import ChatPage from "@/pages/ChatPage";
 import VoicePage from "@/pages/VoicePage";
 import { useAuth } from "@/context/AuthContext";
 import UserLayout from "@/components/UserLayout";
+import { VoiceChatProvider } from "@/context/VoiceChatContext";
 
 // ─── Route Guard ────────────────────────────────────────────────────────────
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -32,35 +33,37 @@ export default function App() {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthProvider>
-        <BrowserRouter>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: "hsl(0 0% 8%)",
-                border: "1px solid hsl(0 0% 16%)",
-                color: "hsl(30 10% 96%)",
-              },
-            }}
-            richColors
-          />
-          <Routes>
-            <Route path={ROUTES.HOME} element={<UserLayout><LandingPage /></UserLayout>} />
-            <Route path={ROUTES.AUDIOS} element={<UserLayout><AudiosPage /></UserLayout>} />
-            <Route path={ROUTES.VIDEOS} element={<UserLayout><VideosPage /></UserLayout>} />
-            <Route path={ROUTES.CHAT} element={<ProtectedRoute><UserLayout><ChatPage /></UserLayout></ProtectedRoute>} />
-            <Route path="/voice" element={<UserLayout><VoicePage /></UserLayout>} />
+        <VoiceChatProvider>
+          <BrowserRouter>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                style: {
+                  background: "hsl(0 0% 8%)",
+                  border: "1px solid hsl(0 0% 16%)",
+                  color: "hsl(30 10% 96%)",
+                },
+              }}
+              richColors
+            />
+            <Routes>
+              <Route path={ROUTES.HOME} element={<UserLayout><LandingPage /></UserLayout>} />
+              <Route path={ROUTES.AUDIOS} element={<UserLayout><AudiosPage /></UserLayout>} />
+              <Route path={ROUTES.VIDEOS} element={<UserLayout><VideosPage /></UserLayout>} />
+              <Route path={ROUTES.CHAT} element={<ProtectedRoute><UserLayout><ChatPage /></UserLayout></ProtectedRoute>} />
+              <Route path="/voice" element={<UserLayout><VoicePage /></UserLayout>} />
 
-            <Route path={ROUTES.ADMIN_LOGIN} element={<LoginPage />} />
-            <Route path={ROUTES.ADMIN_REGISTER} element={<RegisterPage />} />
-            <Route path={ROUTES.ADMIN_REQUESTS} element={<AdminRequestsPage />} />
-            <Route path={ROUTES.ADMIN_AUDIOS} element={<AdminAudiosPage />} />
-            <Route path={ROUTES.ADMIN_VIDEOS} element={<AdminVideosPage />} />
-            <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
-            <Route path={ROUTES.USER_PROFILE} element={<ProtectedRoute><UserLayout><UserProfilePage /></UserLayout></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
-          </Routes>
-        </BrowserRouter>
+              <Route path={ROUTES.ADMIN_LOGIN} element={<LoginPage />} />
+              <Route path={ROUTES.ADMIN_REGISTER} element={<RegisterPage />} />
+              <Route path={ROUTES.ADMIN_REQUESTS} element={<AdminRequestsPage />} />
+              <Route path={ROUTES.ADMIN_AUDIOS} element={<AdminAudiosPage />} />
+              <Route path={ROUTES.ADMIN_VIDEOS} element={<AdminVideosPage />} />
+              <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+              <Route path={ROUTES.USER_PROFILE} element={<ProtectedRoute><UserLayout><UserProfilePage /></UserLayout></ProtectedRoute>} />
+              <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
+            </Routes>
+          </BrowserRouter>
+        </VoiceChatProvider>
       </AuthProvider>
     </GoogleOAuthProvider>
   );

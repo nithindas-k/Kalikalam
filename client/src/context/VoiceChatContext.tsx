@@ -42,6 +42,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         socketRef.current = socket;
 
         socket.on("voice:participants", (list: any[]) => {
+            console.log("🎙️ Received voice:participants from server:", list);
             setParticipants(list.map(p => ({
                 id: p.id,
                 name: p.name,
@@ -50,9 +51,10 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             })));
         });
 
+
         socket.on("voice:user-joined", async (data: { socketId: string; name: string }) => {
             console.log(`🎙️ New peer joined: ${data.name}`);
-            // Creates RTCPeerConnection Offering node flawlessly securely
+           
             await createPeerConnection(data.socketId, true);
         });
 
@@ -114,6 +116,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
                     remoteAudiosRef.current.set(targetSocketId, audio);
                 }
                 audio.srcObject = event.streams[0];
+                audio.play().catch(e => console.log("Audio auto-play prevented:", e));
             }
         };
 

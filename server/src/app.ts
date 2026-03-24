@@ -125,14 +125,17 @@ io.on("connection", async (socket) => {
         socket.emit("chat:history", []);
     }
 
-    // Broadcast online user count
+  
     io.emit("chat:online", io.engine.clientsCount);
 
-    // Handle incoming messages
+    
+    socket.emit("voice:participants", Array.from(voiceParticipants.values()));
+
+
     socket.on("chat:send", async (msg: Omit<ChatMessage, "id" | "timestamp">) => {
         console.log(`💬 Message from ${msg.senderName}: [${msg.type}]`);
 
-        // Generate ID immediate to send fully populated payload to client
+        
         const message: ChatMessage = {
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             senderId: msg.senderId || "unknown",
@@ -143,11 +146,11 @@ io.on("connection", async (socket) => {
             timestamp: new Date().toISOString(),
         };
 
-        // 1. Broadcast to ALL clients IMMEDIATELY for real-time responsiveness
+        
         io.emit("chat:message", message);
 
         try {
-            // 2. Persist to MongoDB back-end asynchronously
+            
             await ChatMessageModel.create({
                 senderId: message.senderId,
                 senderName: message.senderName,
