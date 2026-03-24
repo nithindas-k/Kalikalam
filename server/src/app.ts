@@ -11,6 +11,7 @@ import authRoutes from "./modules/auth/auth.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import { API_ROUTES } from "./constants/routes";
 import { ChatMessageModel } from "./modules/chat/chat.entity";
+import { UserModel } from "./modules/auth/auth.model";
  
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,7 +45,7 @@ app.use(`${API_ROUTES.BASE}${API_ROUTES.VIDEOS}`, videoRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.ADMIN}`, adminRoutes);
 app.use(`${API_ROUTES.BASE}/auth`, authRoutes);
 
-// ─── Chat Static Media Upload Endpoint ──────────────────────────────────────
+
 import { upload } from "./config/multer";
 app.post(`${API_ROUTES.BASE}/chat/upload`, upload, (req: any, res) => {
     const files = req.files;
@@ -67,7 +68,6 @@ app.get("/health", (req, res) => {
 
 app.use(errorMiddleware);
 
-// ─── HTTP + Socket.io server ─────────────────────────────────────────────────
 const httpServer = http.createServer(app);
 
 const io = new SocketIOServer(httpServer, {
@@ -113,6 +113,11 @@ io.on("connection", async (socket) => {
         }));
 
         socket.emit("chat:history", formatted);
+
+        // 👥 Pull All Users for @mentions Node flawlessly flaws flaws setup Node setup
+        const users = await UserModel.find({}, "name image");
+        socket.emit("chat:users", users.map(u => ({ name: u.name, image: u.image || "" })));
+
     } catch (err) {
         console.error("Failed to load chat history:", err);
         socket.emit("chat:history", []);
@@ -158,13 +163,43 @@ io.on("connection", async (socket) => {
         socket.broadcast.emit("chat:typing", data);
     });
 
+   
+    socket.on("chat:delete", async (data: { messageId: string; senderId: string }) => {
+        console.log(`🗑️ Delete Message Request: ${data.messageId} by ${data.senderId}`);
+        try {
+          
+            await ChatMessageModel.deleteOne({ 
+                $or: [{ _id: data.messageId }, { id: data.messageId }] 
+            });
+          
+            io.emit("chat:delete", { messageId: data.messageId });
+        } catch (err) {
+            console.error("🚨 Failed to delete chat message from MongoDB:", err);
+        }
+    });
+
+ 
+    const updateOnlineUsers = () => {
+        const users: string[] = [];
+        for (const [id, s] of io.sockets.sockets) {
+           
+            const name = (s as any).userName || s.id.slice(0, 4);
+            if (!users.includes(name)) users.push(name);
+        }
+        io.emit("chat:online", { count: io.engine.clientsCount, users });
+    };
+
+    
+    (socket as any).userName = (socket.handshake.query?.userName as string) || "User_" + socket.id.slice(0, 4);
+    updateOnlineUsers();
+
     socket.on("disconnect", () => {
         console.log(`🔴 Socket disconnected: ${socket.id}`);
-        io.emit("chat:online", io.engine.clientsCount);
+        updateOnlineUsers();
     });
 });
 
-// ─── Start server ─────────────────────────────────────────────────────────────
+
 connectDB().then(() => {
     httpServer.listen(PORT, () => {
         console.log(`🚀 Server running on http://localhost:${PORT}`);

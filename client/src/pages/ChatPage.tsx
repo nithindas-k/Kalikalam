@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ImageCropDialog from "@/components/ImageCropDialog";
 
-function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
+function MessageBubble({ msg, isOwn, onDelete }: { msg: ChatMessage; isOwn: boolean; onDelete?: () => void }) {
     const timeStr = new Date(msg.timestamp).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -45,7 +45,7 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
     };
 
     return (
-        <div className={cn("flex items-end gap-2.5", isOwn ? "flex-row-reverse" : "flex-row")}>
+        <div className={cn("flex items-end gap-2.5 group/msg relative", isOwn ? "flex-row-reverse" : "flex-row")}>
             {/* Avatar */}
             <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 flex-shrink-0 flex items-center justify-center shadow-inner">
                 {msg.senderImage ? (
@@ -55,7 +55,18 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
                 )}
             </div>
 
-            <div className={cn("flex flex-col gap-1 max-w-[75%] sm:max-w-[60%]", isOwn ? "items-end" : "items-start")}>
+            <div className={cn("flex flex-col gap-1 max-w-[75%] sm:max-w-[60%] relative", isOwn ? "items-end" : "items-start")}>
+                {/* 🗑️ Delete Option Trigger Node Node flawless Node flawless setup Node setup flawlessly */}
+                {isOwn && onDelete && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="absolute -top-1 right-2 opacity-0 group-hover/msg:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-red-500 rounded-full p-1 border border-red-500/20 shadow-lg active:scale-95"
+                        title="Delete for everyone"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                    </button>
+                )}
+
                 {/* Sender name (others only) */}
                 {!isOwn && (
                     <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400/80 px-1 truncate max-w-full">
@@ -138,13 +149,15 @@ export default function ChatPage() {
     const navigate = useNavigate();
     const [text, setText] = useState("");
     const [showScrollBtn, setShowScrollBtn] = useState(false);
+    const [showMentions, setShowMentions] = useState(false); // 🔍 Popup trigger Node Node 
+    const [mentionSearch, setMentionSearch] = useState(""); // 🔍 Filter search criteria flaws Node
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId, loadingHistory } = useChat();
+    const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId, loadingHistory, deleteMessage, allUsers } = useChat();
     const { recording, startRecording, stopRecording, stream } = useAudioRecorder(); // 🎙️ Attached stream
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -256,6 +269,22 @@ export default function ChatPage() {
 
     const handleScroll = () => {
         if (isAtBottom()) setShowScrollBtn(false);
+    };
+
+    const handleTextChange = (val: string) => {
+        setText(val);
+        handleInputChange();
+
+        const lastAt = val.lastIndexOf("@");
+        if (lastAt !== -1) {
+            const afterAt = val.substring(lastAt + 1);
+            if (!afterAt.includes(" ")) {
+                setShowMentions(true);
+                setMentionSearch(afterAt);
+                return;
+            }
+        }
+        setShowMentions(false);
     };
 
     // Send text
@@ -427,7 +456,12 @@ export default function ChatPage() {
                     ) : null}
 
                     {!loadingHistory && messages.map((msg) => (
-                        <MessageBubble key={msg.id} msg={msg} isOwn={msg.senderId === senderId} />
+                        <MessageBubble 
+                            key={msg.id} 
+                            msg={msg} 
+                            isOwn={msg.senderId === senderId} 
+                            onDelete={() => deleteMessage(msg.id)} // 🗑️ Delete trigger Node Node 
+                        />
                     ))}
 
                     {/* Typing dots */}
@@ -565,6 +599,38 @@ export default function ChatPage() {
                         ) : (
                             /* ─── STAGE 0: Standard Text Input ────────────────────────── */
                             <>
+                                {/* ─── 👥 Mentions Suggestion Popover Node flawless Setup Node Node flaws node flawlessly layout */}
+                                {showMentions && (
+                                    <div className="absolute bottom-full left-0 right-0 mb-3 mx-4 p-2 bg-[#121212]/95 border border-white/[0.08] backdrop-blur-xl rounded-2xl max-h-48 overflow-y-auto shadow-2xl space-y-1 z-20">
+                                        {allUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).length === 0 ? (
+                                            <div className="text-[11px] text-white/30 text-center py-3">No matching users</div>
+                                        ) : (
+                                            allUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).map(u => (
+                                                <div
+                                                    key={u.name}
+                                                    onClick={() => {
+                                                        const lastAt = text.lastIndexOf("@");
+                                                        const before = text.substring(0, lastAt);
+                                                        handleTextChange(before + `@${u.name} `);
+                                                        setShowMentions(false);
+                                                        textareaRef.current?.focus();
+                                                    }}
+                                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors text-left"
+                                                >
+                                                    <div className="w-6 h-6 rounded-full overflow-hidden border border-white/10 bg-white/5 flex items-center justify-center">
+                                                        {u.image ? (
+                                                            <img src={u.image} alt={u.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User className="w-3 h-3 text-white/40" />
+                                                        )}
+                                                    </div>
+                                                    <span className="text-sm text-white/90 font-medium">@{u.name}</span>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Image */}
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
@@ -582,8 +648,7 @@ export default function ChatPage() {
                                     placeholder="Say something..."
                                     className="flex-1 bg-transparent text-white text-sm placeholder:text-white/20 resize-none outline-none leading-5 max-h-32 overflow-y-auto py-2"
                                     onChange={(e) => {
-                                        setText(e.target.value);
-                                        handleInputChange();
+                                        handleTextChange(e.target.value);
                                         e.target.style.height = "auto";
                                         e.target.style.height = Math.min(e.target.scrollHeight, 128) + "px";
                                     }}

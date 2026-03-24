@@ -12,18 +12,21 @@ export function useChat() {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [onlineCount, setOnlineCount] = useState(0);
+    const [onlineUsers, setOnlineUsers] = useState<string[]>([]); // 👥 Names for @mention suggestions
+    const [allUsers, setAllUsers] = useState<{ name: string; image: string }[]>([]); // 👥 ALL DB users
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [connected, setConnected] = useState(false);
-    const [loadingHistory, setLoadingHistory] = useState(true); // ⌛ Start as loading list flawlessly
+    const [loadingHistory, setLoadingHistory] = useState(true); 
     const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (!token) return;
-        setLoadingHistory(true); // ⏳ Reset loading on connect node layout
+        setLoadingHistory(true); 
 
         const socketInstance = io(SOCKET_URL, {
             reconnection: true,
             auth: { token },
+            query: { userName: user?.name || "" } 
         });
 
         setSocket(socketInstance);
@@ -80,7 +83,22 @@ export function useChat() {
             onMessage(m);
         });
 
-        socketInstance.on("chat:online", (count) => setOnlineCount(count));
+        socketInstance.on("chat:delete", (data: { messageId: string }) => {
+            setMessages((prev) => prev.filter((m) => m.id !== data.messageId && (m as any)._id !== data.messageId));
+        });
+
+        socketInstance.on("chat:online", (data: any) => {
+            if (typeof data === "number") {
+                setOnlineCount(data);
+            } else if (data && typeof data === "object") {
+                setOnlineCount(data.count || 0);
+                setOnlineUsers(data.users || []);
+            }
+        });
+        socketInstance.on("chat:users", (users: any) => {
+             setAllUsers(users || []);
+        });
+
         socketInstance.on("chat:typing", onTyping);
 
         return () => {
@@ -130,13 +148,21 @@ export function useChat() {
         typingTimerRef.current = setTimeout(() => sendTyping(false), 1500);
     }, [sendTyping]);
 
+    const deleteMessage = useCallback((messageId: string) => {
+        if (!socket || !user) return;
+        socket.emit("chat:delete", { messageId, senderId: user.id });
+    }, [socket, user]);
+
     return {
         messages,
+        allUsers, 
         onlineCount,
+        onlineUsers, 
         typingUsers,
         connected,
         loadingHistory, 
         sendMessage,
+        deleteMessage, 
         handleInputChange,
         senderId: user?.id || "",
         senderName: user?.name || "Anonymous",
