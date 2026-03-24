@@ -27,7 +27,13 @@ app.use(
     cors({
         origin: (origin, callback) => {
             if (!origin) return callback(null, true);
-            if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app")) {
+            // Allow your domains + local testing
+            if (
+                allowedOrigins.indexOf(origin) !== -1 || 
+                origin.endsWith(".vercel.app") || 
+                origin.endsWith(".onrender.com") ||
+                origin.includes("localhost")
+            ) {
                 callback(null, true);
             } else {
                 callback(new Error("Not allowed by CORS"));
