@@ -13,8 +13,8 @@ delete (L.Icon.Default.prototype as any)._getIconUrl;
 const INDIA_GEOJSON_URL = "https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/master/Indian_States.geojson";
 const KERALA_GEOJSON_URL = "https://raw.githubusercontent.com/geohacker/kerala/master/geojsons/district.geojson";
 
+const WORLD_CENTER: [number, number] = [20, 0];
 const INDIA_CENTER: [number, number] = [20.5937, 78.9629];
-const INDIA_BOUNDS: [[number, number], [number, number]] = [[5, 65], [38, 98]];
 
 const createAvatarIcon = (url: string, isSelected: boolean) => {
   return L.divIcon({
@@ -36,7 +36,7 @@ export default function StatusPage() {
   const { user } = useAuth();
   const [members, setMembers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [view, setView] = useState<"india" | "kerala">("india");
+  const [view, setView] = useState<"world" | "india" | "kerala">("world");
   const [activeTab, setActiveTab] = useState<"map" | "list">("map"); // Mobile Toggler
   const [indiaGeo, setIndiaGeo] = useState<any>(null);
   const [keralaGeo, setKeralaGeo] = useState<any>(null);
@@ -76,7 +76,9 @@ export default function StatusPage() {
     
     useEffect(() => {
        if (prevView.current !== view) {
-          if (view === "india") {
+          if (view === "world") {
+             map.setView(WORLD_CENTER, 2);
+          } else if (view === "india") {
              map.setView(INDIA_CENTER, 5);
           } else {
              map.fitBounds([
@@ -140,10 +142,8 @@ export default function StatusPage() {
         {/* 🗺️ LEAFLET SECTION */}
         <div className={`flex-1 relative bg-neutral-100 overflow-hidden border-t border-white/5 ${activeTab === 'map' ? 'block' : 'hidden md:block'}`}>
           <MapContainer 
-            center={INDIA_CENTER} 
-            zoom={5} 
-            maxBounds={INDIA_BOUNDS}
-            maxBoundsViscosity={1.0}
+            center={WORLD_CENTER} 
+            zoom={2} 
             className="h-full w-full"
             zoomControl={false}
           >
@@ -203,9 +203,10 @@ export default function StatusPage() {
                     <span className="text-[7px] text-neutral-500 uppercase font-black tracking-widest block mb-2">Legends</span>
                     <span className="text-2xl font-black text-white">{members.length}</span>
                  </div>
-                 <div className="bg-[#111] p-4 rounded-3xl border border-white/5">
+                 <div className="bg-[#111] p-4 rounded-3xl border border-white/5 cursor-pointer hover:border-orange-500/30 transition-all"
+                      onClick={() => setView(view === 'world' ? 'india' : view === 'india' ? 'kerala' : 'world')}>
                     <span className="text-[7px] text-neutral-500 uppercase font-black tracking-widest block mb-2">Region</span>
-                    <span className="text-2xl font-black text-emerald-500">{view === 'india' ? 'India' : 'Kerala'}</span>
+                    <span className="text-2xl font-black text-emerald-500 capitalize">{view}</span>
                  </div>
               </div>
            </div>
