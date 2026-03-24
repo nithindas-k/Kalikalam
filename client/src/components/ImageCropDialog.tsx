@@ -11,9 +11,10 @@ interface ImageCropDialogProps {
     onClose: () => void;
     onCropComplete: (croppedImage: Blob) => void;
     aspectRatio?: number;
+    title?: string;
 }
 
-export default function ImageCropDialog({ image, open, onClose, onCropComplete, aspectRatio = 16 / 9 }: ImageCropDialogProps) {
+export default function ImageCropDialog({ image, open, onClose, onCropComplete, aspectRatio = 16 / 9, title = "Crop Image" }: ImageCropDialogProps) {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
@@ -46,7 +47,7 @@ export default function ImageCropDialog({ image, open, onClose, onCropComplete, 
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-black border-white/10">
                 <DialogHeader className="p-4 border-b border-white/10">
-                    <DialogTitle className="text-lg font-bold">Crop Cover Image</DialogTitle>
+                    <DialogTitle className="text-lg font-bold">{title}</DialogTitle>
                 </DialogHeader>
 
                 <div className="relative h-[350px] w-full bg-[#111]">
