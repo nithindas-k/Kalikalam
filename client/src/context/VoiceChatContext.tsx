@@ -34,17 +34,42 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
     const localStreamRef = useRef<MediaStream | null>(null);
     const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
     const remoteAudiosRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+    const iceCandidatesQueue = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
+    const userRef = useRef(user);
 
     useEffect(() => {
-       
+        userRef.current = user;
+    }, [user]);
+
+    const emitJoin = () => {
+        const currentUser = userRef.current;
+        const userProfile = { 
+            id: (currentUser as any)?._id || (currentUser as any)?.id || `${Date.now()}`, 
+            name: currentUser?.name || "Anonymous", 
+            avatar: currentUser?.image || "" 
+        };
+        console.log("📤 Emitting voice:join", userProfile);
+        socketRef.current?.emit("voice:join", userProfile);
+        sessionStorage.setItem("voice_active", "true");
+    };
+
+    useEffect(() => {
         const socket = io(SOCKET_URL, {
             query: { userName: "User_" + Math.random().toString(36).slice(2, 6) },
             transports: ["websocket"]
         });
         socketRef.current = socket;
 
+        socket.on("connect", () => {
+            console.log("🎙️ Socket connected to voice server");
+            if (sessionStorage.getItem("voice_active") === "true") {
+                console.log("🔄 Re-syncing voice join after reconnect/reload");
+                // We don't call joinVoice directly here to avoid permission loops, 
+                // but if isConnected is already true (reconnect), we emitJoin.
+            }
+        });
+
         socket.on("voice:participants", (list: any[]) => {
-            console.log("🎙️ Received voice:participants from server:", list);
             setParticipants(list.map(p => ({
                 id: p.id,
                 name: p.name,
@@ -53,25 +78,38 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             })));
         });
 
-
         socket.on("voice:user-joined", async (data: { socketId: string; name: string }) => {
             console.log(`🎙️ New peer joined: ${data.name}`);
-           
             await createPeerConnection(data.socketId, true);
         });
 
         socket.on("voice:signal", async (data: { from: string; signal: any }) => {
-            const pc = peerConnections.current.get(data.from) || await createPeerConnection(data.from, false);
+            let pc = peerConnections.current.get(data.from);
             
             if (data.signal.sdp) {
+                if (!pc) pc = await createPeerConnection(data.from, false);
                 await pc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
+                
                 if (data.signal.sdp.type === "offer") {
                     const answer = await pc.createAnswer();
                     await pc.setLocalDescription(answer);
                     socketRef.current?.emit("voice:signal", { to: data.from, signal: { sdp: pc.localDescription } });
                 }
+
+                const queued = iceCandidatesQueue.current.get(data.from) || [];
+                while (queued.length > 0) {
+                    const candidate = queued.shift();
+                    if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                }
+                iceCandidatesQueue.current.delete(data.from);
             } else if (data.signal.candidate) {
-                await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                if (pc && pc.remoteDescription) {
+                    await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                } else {
+                    const queue = iceCandidatesQueue.current.get(data.from) || [];
+                    queue.push(data.signal.candidate);
+                    iceCandidatesQueue.current.set(data.from, queue);
+                }
             }
         });
 
@@ -79,8 +117,14 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             closePeerConnection(socketId);
         });
 
+        // Auto-rejoin logic for reload
+        if (sessionStorage.getItem("voice_active") === "true") {
+            setTimeout(() => {
+                joinVoice().catch(console.error);
+            }, 1000);
+        }
+
         return () => {
-            leaveVoice();
             socket.disconnect();
         };
     }, []);
@@ -88,37 +132,38 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
     const createPeerConnection = async (targetSocketId: string, isOfferor: boolean) => {
         if (peerConnections.current.has(targetSocketId)) return peerConnections.current.get(targetSocketId)!;
 
-        console.log(`Creating RTCPeerConnection for ${targetSocketId} (Offeror: ${isOfferor})`);
         const pc = new RTCPeerConnection(configuration);
         peerConnections.current.set(targetSocketId, pc);
 
-        // Add Local Tracks to PC
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => {
                 pc.addTrack(track, localStreamRef.current!);
             });
         }
 
-        // On Ice Candidate Node flawlessly layout setup
         pc.onicecandidate = (event) => {
             if (event.candidate) {
                 socketRef.current?.emit("voice:signal", { to: targetSocketId, signal: { candidate: event.candidate } });
             }
         };
 
-        // On Remote Track flawlessly layout
         pc.ontrack = (event) => {
-            console.log(`Received remote track for ${targetSocketId}`);
             if (event.streams && event.streams[0]) {
                 let audio = remoteAudiosRef.current.get(targetSocketId);
                 if (!audio) {
                     audio = document.createElement("audio");
                     audio.autoplay = true;
+                    audio.style.display = "none";
                     document.body.appendChild(audio);
                     remoteAudiosRef.current.set(targetSocketId, audio);
                 }
                 audio.srcObject = event.streams[0];
-                audio.play().catch(e => console.log("Audio auto-play prevented:", e));
+            }
+        };
+
+        pc.onconnectionstatechange = () => {
+            if (pc.connectionState === "disconnected" || pc.connectionState === "failed" || pc.connectionState === "closed") {
+                closePeerConnection(targetSocketId);
             }
         };
 
@@ -143,24 +188,22 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             audio.remove();
             remoteAudiosRef.current.delete(socketId);
         }
+        iceCandidatesQueue.current.delete(socketId);
     };
 
     const joinVoice = async () => {
+        if (isConnected) {
+            emitJoin();
+            return;
+        }
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             localStreamRef.current = stream;
             setIsConnected(true);
-
-            const userProfile = { 
-                id: (user as any)?._id || (user as any)?.id || `${Date.now()}`, 
-                name: user?.name || "Anonymous", 
-                avatar: user?.image || "" 
-            };
-            
-            socketRef.current?.emit("voice:join", userProfile);
+            emitJoin();
         } catch (err) {
             console.error("Failed to get mic stream:", err);
-            alert("Mic permission denied!");
+            sessionStorage.removeItem("voice_active");
         }
     };
 
@@ -169,13 +212,11 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             localStreamRef.current.getTracks().forEach(track => track.stop());
             localStreamRef.current = null;
         }
-
-   
         peerConnections.current.forEach((_, key) => closePeerConnection(key));
         peerConnections.current.clear();
-
         socketRef.current?.emit("voice:leave");
         setIsConnected(false);
+        sessionStorage.removeItem("voice_active");
     };
 
     const toggleMute = () => {
