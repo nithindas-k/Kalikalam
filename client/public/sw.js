@@ -12,8 +12,8 @@ self.addEventListener("push", (event) => {
 
     const options = {
         body: data.body,
-        icon: data.icon || "/favicon.ico",
-        badge: "/favicon.ico",
+        icon: data.icon || "https://api.dicebear.com/7.x/initials/svg?seed=Kalikalam&backgroundColor=f97316",
+        badge: "https://api.dicebear.com/7.x/initials/svg?seed=K&backgroundColor=f97316",
         data: data.data || {}
     };
 
