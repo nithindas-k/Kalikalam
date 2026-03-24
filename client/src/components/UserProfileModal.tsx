@@ -14,7 +14,7 @@ export default function UserProfileModal({ user, open, onClose, isOnline }: User
 
     return (
         <>
-            {/* Backdrop */}
+     
             <div 
                 className={cn(
                     "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300",
@@ -23,7 +23,7 @@ export default function UserProfileModal({ user, open, onClose, isOnline }: User
                 onClick={onClose}
             />
 
-            {/* Modal Container */}
+           
             <div 
                 className={cn(
                     "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-[260px]",
