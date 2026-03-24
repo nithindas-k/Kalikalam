@@ -145,6 +145,16 @@ export default function StatusPage() {
          </button>
       </div>
 
+      {/* FLOATING MOBILE SYNC BUTTON (On Map View) */}
+      {activeTab === 'map' && user && (
+         <button 
+            onClick={handleSyncLocation}
+            className="md:hidden fixed bottom-24 right-4 z-[2005] w-14 h-14 bg-orange-500 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all border-4 border-black group"
+         >
+            <RefreshCw className="w-6 h-6 text-black group-hover:rotate-180 transition-transform duration-700" />
+         </button>
+      )}
+
       <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
         
         {/* 🗺️ LEAFLET SECTION */}
