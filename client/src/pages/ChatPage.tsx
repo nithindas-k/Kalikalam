@@ -153,6 +153,12 @@ export default function ChatPage() {
     const [tempImage, setTempImage] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
 
+    // 🎙️ Voice Note Preview States
+    const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [durationSec, setDurationSec] = useState(0);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     // Auto-scroll
     const isAtBottom = () => {
         const c = messagesContainerRef.current;
@@ -234,29 +240,59 @@ export default function ChatPage() {
         }
     };
 
-    // Send voice note (HTTP Upload + Socket)
+    // 🎙️ Handle Voice Recording Controller states
+    useEffect(() => {
+        if (recording) {
+            setDurationSec(0);
+            timerRef.current = setInterval(() => {
+                setDurationSec((prev) => prev + 1);
+            }, 1000);
+        } else {
+            if (timerRef.current) clearInterval(timerRef.current);
+        }
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, [recording]);
+
     const handleMicToggle = async () => {
         if (!recording) {
+            setRecordedBlob(null);
+            setPreviewUrl(null);
             await startRecording();
         } else {
             const blob = await stopRecording();
             if (!blob) return;
-
-            const formData = new FormData();
-            formData.append("audio", blob, "voice-note.m4a");
-
-            try {
-                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/chat/upload`, {
-                    method: "POST",
-                    body: formData,
-                });
-                const data = await res.json();
-                if (data.url) sendMessage("audio", data.url);
-            } catch (err) {
-                console.error("Upload failed:", err);
-                toast.error("Failed to upload audio");
-            }
+            setRecordedBlob(blob);
+            setPreviewUrl(URL.createObjectURL(blob));
         }
+    };
+
+    const handleSendVoice = async () => {
+        if (!recordedBlob) return;
+
+        const formData = new FormData();
+        formData.append("audio", recordedBlob, "voice-note.m4a");
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/chat/upload`, {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.url) sendMessage("audio", data.url);
+        } catch (err) {
+            console.error("Upload failed:", err);
+            toast.error("Failed to upload audio");
+        } finally {
+            // Reset
+            setRecordedBlob(null);
+            setPreviewUrl(null);
+        }
+    };
+
+    const formatTimer = (sec: number) => {
+        const mins = Math.floor(sec / 60);
+        const secs = sec % 60;
+        return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
     };
 
     return (
@@ -345,64 +381,115 @@ export default function ChatPage() {
 
             <div className="shrink-0 px-3 sm:px-6 py-3 pb-safe border-t border-white/[0.06] bg-[#0d0d0d]/80 backdrop-blur-xl">
                 <div className="max-w-2xl mx-auto">
-                    <div className="flex items-end gap-2 bg-white/[0.05] border border-white/[0.07] rounded-2xl px-3 py-2">
-                        {/* Image */}
-                        <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center text-white/40 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
-                            title="Send Image"
-                        >
-                            <ImagePlus className="w-4 h-4" />
-                        </button>
+                    <div className="flex items-center gap-2 bg-white/[0.05] border border-white/[0.07] rounded-2xl px-3 py-2 min-h-[52px]">
+                        
+                        {/* ─── STAGE 1 & 2: Recording Or Preview ───────────────────── */}
+                        {recording || previewUrl ? (
+                            <div className="flex items-center justify-between w-full gap-3">
+                                {/* Trash / Stop Button */}
+                                <button
+                                    onClick={() => {
+                                        if (recording) stopRecording(); // Stop first
+                                        setRecordedBlob(null);
+                                        setPreviewUrl(null);
+                                    }}
+                                    className="w-9 h-9 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center transition-all"
+                                    title="Delete Recording"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                                </button>
 
-                        {/* Text */}
-                        <textarea
-                            ref={textareaRef}
-                            value={text}
-                            rows={1}
-                            placeholder="Say something..."
-                            className="flex-1 bg-transparent text-white text-sm placeholder:text-white/20 resize-none outline-none leading-5 max-h-32 overflow-y-auto py-2"
-                            onChange={(e) => {
-                                setText(e.target.value);
-                                handleInputChange();
-                                e.target.style.height = "auto";
-                                e.target.style.height = Math.min(e.target.scrollHeight, 128) + "px";
-                            }}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSendText();
-                                }
-                            }}
-                        />
+                                {/* Waveform Preview / Timer */}
+                                <div className="flex-1 flex items-center gap-3">
+                                    {recording ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                                            <span className="text-sm font-mono tracking-wider">{formatTimer(durationSec)}</span>
+                                        </div>
+                                    ) : (
+                                        // WhatsApp style preview player
+                                        <div className="flex-1 flex items-center gap-2">
+                                            <audio src={previewUrl || ""} controls className="h-8 flex-1 bg-transparent dark [&::-webkit-media-controls-enclosure]:bg-transparent [&::-webkit-media-controls-panel]:bg-transparent" />
+                                        </div>
+                                    )}
+                                </div>
 
-                        {/* Mic */}
-                        <button
-                            onClick={handleMicToggle}
-                            className={cn(
-                                "w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-all",
-                                recording
-                                    ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40"
-                                    : "text-white/40 hover:text-orange-400 hover:bg-orange-500/10"
-                            )}
-                            title={recording ? "Stop Recording" : "Record Voice"}
-                        >
-                            {recording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                        </button>
+                                {/* Send / Stop Recording */}
+                                {recording ? (
+                                    <Button
+                                        size="icon"
+                                        onClick={handleMicToggle}
+                                        className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        size="icon"
+                                        onClick={handleSendVoice}
+                                        className="w-9 h-9 rounded-full bg-orange-500 hover:bg-orange-400 text-black shadow-md shadow-orange-500/30"
+                                    >
+                                        <Send className="w-3.5 h-3.5" />
+                                    </Button>
+                                )}
+                            </div>
+                        ) : (
+                            /* ─── STAGE 0: Standard Text Input ────────────────────────── */
+                            <>
+                                {/* Image */}
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center text-white/40 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
+                                    title="Send Image"
+                                >
+                                    <ImagePlus className="w-4 h-4" />
+                                </button>
 
-                        {/* Send */}
-                        <Button
-                            size="icon"
-                            disabled={!text.trim() && !recording}
-                            onClick={handleSendText}
-                            className="w-9 h-9 flex-shrink-0 rounded-full bg-orange-500 hover:bg-orange-400 text-black disabled:opacity-30 disabled:cursor-not-allowed shadow-md shadow-orange-500/30 transition-all active:scale-90"
-                        >
-                            <Send className="w-3.5 h-3.5" />
-                        </Button>
+                                {/* Text */}
+                                <textarea
+                                    ref={textareaRef}
+                                    value={text}
+                                    rows={1}
+                                    placeholder="Say something..."
+                                    className="flex-1 bg-transparent text-white text-sm placeholder:text-white/20 resize-none outline-none leading-5 max-h-32 overflow-y-auto py-2"
+                                    onChange={(e) => {
+                                        setText(e.target.value);
+                                        handleInputChange();
+                                        e.target.style.height = "auto";
+                                        e.target.style.height = Math.min(e.target.scrollHeight, 128) + "px";
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSendText();
+                                        }
+                                    }}
+                                />
+
+                                {/* Mic */}
+                                <button
+                                    onClick={handleMicToggle}
+                                    className={cn(
+                                        "w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-all",
+                                        "text-white/40 hover:text-orange-400 hover:bg-orange-500/10"
+                                    )}
+                                    title="Record Voice"
+                                >
+                                    <Mic className="w-4 h-4" />
+                                </button>
+
+                                {/* Send Text */}
+                                <Button
+                                    size="icon"
+                                    disabled={!text.trim()}
+                                    onClick={handleSendText}
+                                    className="w-9 h-9 flex-shrink-0 rounded-full bg-orange-500 hover:bg-orange-400 text-black disabled:opacity-30 disabled:cursor-not-allowed shadow-md shadow-orange-500/30 transition-all active:scale-90"
+                                >
+                                    <Send className="w-3.5 h-3.5" />
+                                </Button>
+                            </>
+                        )}
                     </div>
-                    <p className="text-[9px] text-white/15 text-center mt-1.5">
-                        Enter to send · Shift+Enter for new line
-                    </p>
                 </div>
             </div>
 
