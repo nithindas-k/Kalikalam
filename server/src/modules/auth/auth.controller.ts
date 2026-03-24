@@ -32,6 +32,8 @@ export const googleLogin = async (req: Request, res: Response) => {
             // 1b. Verify Access Token via UserInfo API
             const googleRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
             const payload = await googleRes.json() as { email?: string; name?: string; picture?: string };
+            console.log("🔍 Google Login Access Token Payload:", payload); // 🔬 DEBUG LOG
+            
             if (!payload.email) return res.status(400).json({ error: "Invalid access token" });
             name = payload.name || "";
             email = payload.email;
@@ -52,8 +54,8 @@ export const googleLogin = async (req: Request, res: Response) => {
                 image: picture || "",
                 role: "user",
             });
-        } else if (picture && !user.image) {
-            // Update photo if they didn't have one before
+        } else if (picture && user.image !== picture) {
+            // Update photo always if changed from Google or legacy Empty
             user.image = picture;
             await user.save();
         }
