@@ -53,7 +53,7 @@ export default function StatusPage() {
 
   const handleSyncLocation = () => {
     if (user?.id) {
-        syncLocation(user.id);
+        syncLocation(user.id, true);
         // Refresh list slightly after to catch some changes
         setTimeout(fetchUsers, 3000); 
     }

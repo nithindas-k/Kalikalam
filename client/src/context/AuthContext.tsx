@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
 
 interface User {
     id: string;
@@ -23,7 +24,7 @@ interface AuthContextType {
     login: (token: string, userData: User) => void;
     logout: () => void;
     updateUser: (updatedUser: User) => void;
-    syncLocation: (uid: string) => void;
+    syncLocation: (uid: string, isManual?: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,8 +58,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
     }, []);
 
-    const syncLocation = (uid: string) => {
+    const syncLocation = (uid: string, isManual: boolean = false) => {
         if ("geolocation" in navigator) {
+            if (isManual) Object.assign(toast, { __gpsId: toast.loading("Acquiring GPS satellite fix...") });
+            
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const { latitude, longitude } = pos.coords;
                 
@@ -89,13 +92,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         if (user && user.id === uid && updatedData.user) {
                             updateUser(updatedData.user);
                         }
+                        if (isManual) {
+                           toast.dismiss((toast as any).__gpsId);
+                           toast.success("Location synchronized successfully!");
+                        }
+                    } else if (isManual) {
+                        toast.dismiss((toast as any).__gpsId);
+                        toast.error("Database update failed.");
                     }
                 } catch (e) {
                     console.error("Auto-location sync failed", e);
+                    if (isManual) {
+                        toast.dismiss((toast as any).__gpsId);
+                        toast.error("Failed to connect to server.");
+                    }
                 }
             }, (err) => {
                console.warn("User GPS denied", err);
-            });
+               if (isManual) {
+                  toast.dismiss((toast as any).__gpsId);
+                  if (err.code === err.PERMISSION_DENIED) {
+                     toast.error("Location permission denied. Please enable it in browser settings.");
+                  } else {
+                     toast.error("Failed to acquire GPS signal.");
+                  }
+               }
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        } else if (isManual) {
+            toast.error("Geolocation is not supported by your browser.");
         }
     };
 
