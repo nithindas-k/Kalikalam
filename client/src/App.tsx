@@ -14,6 +14,7 @@ import { ROUTES } from "@/constants/routes";
 import ProfilePage from "@/pages/admin/ProfilePage";
 import UserProfilePage from "@/pages/UserProfilePage";
 import ChatPage from "@/pages/ChatPage";
+import VoicePage from "@/pages/VoicePage";
 import { useAuth } from "@/context/AuthContext";
 import UserLayout from "@/components/UserLayout";
 
@@ -48,6 +49,7 @@ export default function App() {
             <Route path={ROUTES.AUDIOS} element={<UserLayout><AudiosPage /></UserLayout>} />
             <Route path={ROUTES.VIDEOS} element={<UserLayout><VideosPage /></UserLayout>} />
             <Route path={ROUTES.CHAT} element={<ProtectedRoute><UserLayout><ChatPage /></UserLayout></ProtectedRoute>} />
+            <Route path="/voice" element={<UserLayout><VoicePage /></UserLayout>} />
 
             <Route path={ROUTES.ADMIN_LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.ADMIN_REGISTER} element={<RegisterPage />} />

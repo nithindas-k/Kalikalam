@@ -30,6 +30,7 @@ export function AppSidebar() {
         { label: "Audios", path: ROUTES.AUDIOS, icon: Music },
         { label: "Videos", path: ROUTES.VIDEOS, icon: Play },
         { label: "Chat", path: ROUTES.CHAT, icon: MessageCircle },
+        { label: "Voice Room", path: "/voice", icon: Mic2 },
     ]
 
     const adminItems = [

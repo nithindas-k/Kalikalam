@@ -89,6 +89,8 @@ interface ChatMessage {
     timestamp: string;
 }
 
+const voiceParticipants = new Map<string, { id: string; name: string; avatar: string; socketId: string; isSpeaking: boolean }>();
+
 // ─── Socket handlers ──────────────────────────────────────────────────────────
 io.on("connection", async (socket) => {
     console.log(`🟢 Socket connected: ${socket.id}`);
@@ -114,7 +116,7 @@ io.on("connection", async (socket) => {
 
         socket.emit("chat:history", formatted);
 
-        // 👥 Pull All Users for @mentions Node flawlessly flaws flaws setup Node setup
+       
         const users = await UserModel.find({}, "name image");
         socket.emit("chat:users", users.map(u => ({ name: u.name, image: u.image || "" })));
 
@@ -158,6 +160,57 @@ io.on("connection", async (socket) => {
         }
     });
 
+    // ─── Voice Chat handlers ──────────────────────────────────────────────────
+    socket.on("voice:join", (user: { id: string; name: string; avatar: string }) => {
+        console.log(`🎙️ User joined voice: ${user.name} (${socket.id})`);
+        
+        // Add participant index
+        voiceParticipants.set(socket.id, {
+            id: user.id,
+            name: user.name,
+            avatar: user.avatar,
+            socketId: socket.id,
+            isSpeaking: false
+        });
+
+        // 1. Send CURRENT state list back to the guy joining
+        const others = Array.from(voiceParticipants.values()).filter(p => p.socketId !== socket.id);
+        socket.emit("voice:participants", Array.from(voiceParticipants.values()));
+
+        // 2. Broadcast to everyone else that a new guy joined so they create RTCPeerConnection Offer
+        socket.broadcast.emit("voice:user-joined", {
+            id: user.id,
+            name: user.name,
+            avatar: user.avatar,
+            socketId: socket.id
+        });
+    });
+
+    socket.on("voice:signal", (data: { to: string; signal: any; from: string }) => {
+        // Forward SDP/ICE offer candidates flawlessly securely
+        socket.to(data.to).emit("voice:signal", {
+            signal: data.signal,
+            from: socket.id // Ensure we send the forwarding socket ID
+        });
+    });
+
+    socket.on("voice:speaking", (data: { isSpeaking: boolean }) => {
+        const participant = voiceParticipants.get(socket.id);
+        if (participant) {
+            participant.isSpeaking = data.isSpeaking;
+            io.emit("voice:participants", Array.from(voiceParticipants.values()));
+        }
+    });
+
+    socket.on("voice:leave", () => {
+        if (voiceParticipants.has(socket.id)) {
+            console.log(`🎙️ User left voice: ${socket.id}`);
+            voiceParticipants.delete(socket.id);
+            io.emit("voice:participants", Array.from(voiceParticipants.values()));
+            socket.broadcast.emit("voice:user-left", { socketId: socket.id });
+        }
+    });
+
     // Typing indicator
     socket.on("chat:typing", (data: { senderName: string; isTyping: boolean }) => {
         socket.broadcast.emit("chat:typing", data);
@@ -195,6 +248,14 @@ io.on("connection", async (socket) => {
 
     socket.on("disconnect", () => {
         console.log(`🔴 Socket disconnected: ${socket.id}`);
+        
+        if (voiceParticipants.has(socket.id)) {
+            console.log(`🎙️ User disconnected from voice: ${socket.id}`);
+            voiceParticipants.delete(socket.id);
+            io.emit("voice:participants", Array.from(voiceParticipants.values()));
+            socket.broadcast.emit("voice:user-left", { socketId: socket.id });
+        }
+
         updateOnlineUsers();
     });
 });
