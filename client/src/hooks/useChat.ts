@@ -26,7 +26,8 @@ export function useChat() {
         const socketInstance = io(SOCKET_URL, {
             reconnection: true,
             auth: { token },
-            query: { userName: user?.name || "" } 
+            query: { userName: user?.name || "" },
+            transports: ["websocket"]
         });
 
         setSocket(socketInstance);

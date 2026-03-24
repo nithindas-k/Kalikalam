@@ -15,7 +15,8 @@ interface VoiceChatContextType {
 
 export const VoiceChatContext = createContext<VoiceChatContextType | undefined>(undefined);
 
-const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const SOCKET_URL = rawApiUrl.replace(/\/api$/, "");
 
 const configuration: RTCConfiguration = {
     iceServers: [
@@ -35,9 +36,10 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
     const remoteAudiosRef = useRef<Map<string, HTMLAudioElement>>(new Map());
 
     useEffect(() => {
-        // Shared Socket.io setup Node flawless layout
+       
         const socket = io(SOCKET_URL, {
-            query: { userName: "User_" + Math.random().toString(36).slice(2, 6) }
+            query: { userName: "User_" + Math.random().toString(36).slice(2, 6) },
+            transports: ["websocket"]
         });
         socketRef.current = socket;
 
@@ -112,7 +114,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
                 if (!audio) {
                     audio = document.createElement("audio");
                     audio.autoplay = true;
-                    document.body.appendChild(audio); // Invisible on body node flawlessly setup
+                    document.body.appendChild(audio);
                     remoteAudiosRef.current.set(targetSocketId, audio);
                 }
                 audio.srcObject = event.streams[0];
