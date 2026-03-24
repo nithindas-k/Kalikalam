@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap, GeoJSON, Popup } from "react-l
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { motion } from "framer-motion";
-import { Laugh, ChevronRight } from "lucide-react";
+import { Laugh, ChevronRight, Map as MapIcon, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/context/AuthContext";
@@ -38,6 +38,7 @@ export default function StatusPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [view, setView] = useState<"india" | "kerala">("india");
+  const [activeTab, setActiveTab] = useState<"map" | "list">("map"); // Mobile Toggler
   const [indiaGeo, setIndiaGeo] = useState<any>(null);
   const [keralaGeo, setKeralaGeo] = useState<any>(null);
 
@@ -117,6 +118,7 @@ export default function StatusPage() {
   return (
     <div className="h-screen w-full relative bg-black text-white flex flex-col font-sans overflow-hidden">
       
+      {/* 📊 ELITE HEADER */}
       <header className="h-20 flex items-center justify-between px-6 bg-black border-b border-white/5 z-[2000]">
          <div className="flex items-center gap-4">
             <Link to={ROUTES.HOME} className="flex items-center gap-3">
@@ -124,16 +126,33 @@ export default function StatusPage() {
                   <Laugh className="w-6 h-6 text-black" />
                </div>
                <div className="flex flex-col">
-                  <h1 className="text-2xl font-black italic uppercase text-[#d4a843] tracking-tighter leading-none">HA! Connect</h1>
-                  <p className="text-[8px] uppercase font-bold text-neutral-500 tracking-[0.2em]">Live Community Network</p>
+                  <h1 className="text-xl md:text-2xl font-black italic uppercase text-[#d4a843] tracking-tighter leading-none">HA! Connect</h1>
+                  <p className="text-[7px] md:text-[8px] uppercase font-bold text-neutral-500 tracking-[0.2em]">Live Community Network</p>
                </div>
             </Link>
+         </div>
+
+         {/* MOBILE TAB TOGGLER */}
+         <div className="flex md:hidden bg-white/5 p-1 rounded-xl">
+            <button 
+               onClick={() => setActiveTab("map")}
+               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${activeTab === 'map' ? 'bg-[#d4a843] text-black' : 'text-neutral-500'}`}
+            >
+               <MapIcon className="w-3 h-3" /> Map
+            </button>
+            <button 
+               onClick={() => setActiveTab("list")}
+               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${activeTab === 'list' ? 'bg-[#d4a843] text-black' : 'text-neutral-500'}`}
+            >
+               <Users className="w-3 h-3" /> List
+            </button>
          </div>
       </header>
 
       <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
         
-        <div className="flex-1 relative bg-neutral-100 overflow-hidden border-t border-white/5">
+        {/* 🗺️ LEAFLET SECTION */}
+        <div className={`flex-1 relative bg-neutral-100 overflow-hidden border-t border-white/5 ${activeTab === 'map' ? 'block' : 'hidden md:block'}`}>
           <MapContainer 
             center={INDIA_CENTER} 
             zoom={5} 
@@ -172,9 +191,9 @@ export default function StatusPage() {
                    }}
                  >
                     <Popup className="premium-popup">
-                       <div className="flex flex-col items-center p-2 min-w-[160px] text-center">
+                       <div className="flex flex-col items-center p-2 min-w-[150px] text-center">
                           <img src={m.image || "https://i.pravatar.cc/150"} className="w-12 h-12 rounded-full border-2 border-[#d4a843] mb-2 shadow-lg" />
-                          <h4 className="text-sm font-black italic uppercase italic text-white leading-none mb-1">{m.name}</h4>
+                          <h4 className="text-sm font-black italic uppercase text-white leading-none mb-1">{m.name}</h4>
                           <p className="text-[9px] font-bold text-[#d4a843] uppercase tracking-widest">{m.location?.name || 'Local Hub'}</p>
                           <p className="text-[7px] text-neutral-400 uppercase font-black tracking-widest mb-2">
                              {m.location?.district || 'Kerala'} {m.location?.state ? `• ${m.location.state}` : ''}
@@ -189,9 +208,10 @@ export default function StatusPage() {
           </MapContainer>
         </div>
 
-        <aside className="w-full md:w-80 lg:w-96 bg-black border-l border-white/5 flex flex-col h-full z-[1000]">
+        {/* 📋 MEMBERS ASIDE SECTION */}
+        <aside className={`w-full md:w-80 lg:w-96 bg-black border-l border-white/5 flex flex-col h-full z-[1000] ${activeTab === 'list' ? 'block' : 'hidden md:flex'}`}>
            <div className="p-8 pb-4">
-              <h2 className="text-4xl font-black italic uppercase text-white tracking-tighter leading-[0.8] mb-8">CONNECTED <br/>NOW</h2>
+              <h2 className="text-3xl md:text-4xl font-black italic uppercase text-white tracking-tighter leading-[0.8] mb-8">CONNECTED <br/>NOW</h2>
               <div className="grid grid-cols-2 gap-4 mb-6">
                  <div className="bg-[#111] p-4 rounded-3xl border border-white/5">
                     <span className="text-[7px] text-neutral-500 uppercase font-black tracking-widest block mb-2">Legends</span>
@@ -208,7 +228,7 @@ export default function StatusPage() {
               {members.map(m => (
                 <motion.div
                   key={m._id}
-                  onClick={() => { setSelectedUser(m); if(m.location) setView('kerala'); }}
+                  onClick={() => { setSelectedUser(m); if(m.location) { setView('kerala'); setActiveTab('map'); } }}
                   className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 ${selectedUser?._id === m._id ? 'bg-[#d4a843]/10 border-[#d4a843]/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
                 >
                    <div className="relative">
@@ -226,7 +246,7 @@ export default function StatusPage() {
               ))}
            </div>
 
-           <div className="p-8 border-t border-white/5">
+           <div className="p-8 border-t border-white/5 mb-20 md:mb-0">
               <button className="w-full py-4 bg-[#d4a843] text-black text-[10px] font-black uppercase italic tracking-widest rounded-xl shadow-lg active:scale-95 transition-all">
                  Join Elite Status
               </button>
