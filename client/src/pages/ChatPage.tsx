@@ -70,14 +70,14 @@ function MessageBubble({ msg, isOwn, onDelete }: { msg: ChatMessage; isOwn: bool
                     </button>
                 )}
 
-                {/* Sender name (others only) */}
+                
                 {!isOwn && (
                     <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400/80 px-1 truncate max-w-full">
                         {msg.senderName || "Anonymous"}
                     </span>
                 )}
 
-                {/* Bubble */}
+                
                 <div
                     className={cn(
                         "rounded-2xl text-[13px] sm:text-sm leading-relaxed shadow-md overflow-hidden",
@@ -111,7 +111,7 @@ function MessageBubble({ msg, isOwn, onDelete }: { msg: ChatMessage; isOwn: bool
                                 onTimeUpdate={handleTimeUpdate}
                                 className="hidden" 
                             />
-                            {/* Custom Play/Pause Button */}
+                        
                             <button
                                 onClick={togglePlay}
                                 className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 flex items-center justify-center transition-all flex-shrink-0"
@@ -123,7 +123,7 @@ function MessageBubble({ msg, isOwn, onDelete }: { msg: ChatMessage; isOwn: bool
                                 )}
                             </button>
 
-                            {/* Custom Waveform / Progress */}
+                            
                             <div className="flex-1 flex flex-col gap-1">
                                 <div className="h-1 bg-black/10 rounded-full w-full overflow-hidden relative">
                                     <div 
@@ -140,7 +140,7 @@ function MessageBubble({ msg, isOwn, onDelete }: { msg: ChatMessage; isOwn: bool
                     )}
                 </div>
 
-                {/* Time */}
+                
                 <span className="text-[9px] text-white/25 px-1">{timeStr}</span>
             </div>
         </div>
@@ -152,8 +152,8 @@ export default function ChatPage() {
     const navigate = useNavigate();
     const [text, setText] = useState("");
     const [showScrollBtn, setShowScrollBtn] = useState(false);
-    const [showMentions, setShowMentions] = useState(false); // 🔍 Popup trigger Node Node 
-    const [mentionSearch, setMentionSearch] = useState(""); // 🔍 Filter search criteria flaws Node
+    const [showMentions, setShowMentions] = useState(false); 
+    const [mentionSearch, setMentionSearch] = useState(""); 
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -161,11 +161,11 @@ export default function ChatPage() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId, loadingHistory, deleteMessage, allUsers } = useChat();
-    const { recording, startRecording, stopRecording, stream } = useAudioRecorder(); // 🎙️ Attached stream
+    const { recording, startRecording, stopRecording, stream } = useAudioRecorder(); 
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // 🔬 Audio Visualizer Effect Loop triggers Node flawlessly
+    
     useEffect(() => {
         if (!stream || !canvasRef.current || !recording) return;
 
@@ -192,14 +192,13 @@ export default function ChatPage() {
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const barWidth = 2.5; // 📐 Thicker bars
-            const barGap = 1.5; // 📐 Tighter gap
+            const barWidth = 2.5; 
+            const barGap = 1.5;
             let x = 0;
 
-            // 🔮 Gorgeous Gradient triggers Node flawlessly setup
             const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-            gradient.addColorStop(0, "#f97316"); // 🟠 Orange
-            gradient.addColorStop(1, "#ec4899"); // 🌸 Pink
+            gradient.addColorStop(0, "#f97316");
+            gradient.addColorStop(1, "#ec4899");
 
             ctx.fillStyle = gradient;
 
