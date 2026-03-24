@@ -14,10 +14,12 @@ export function useChat() {
     const [onlineCount, setOnlineCount] = useState(0);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [connected, setConnected] = useState(false);
+    const [loadingHistory, setLoadingHistory] = useState(true); // ⌛ Start as loading list flawlessly
     const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (!token) return;
+        setLoadingHistory(true); // ⏳ Reset loading on connect node layout
 
         const socketInstance = io(SOCKET_URL, {
             reconnection: true,
@@ -65,11 +67,19 @@ export function useChat() {
         socketInstance.on("chat:history", (h) => {
             console.log("📜 Received history:", h.length);
             onHistory(h);
+            setLoadingHistory(false); 
         });
+        
+        socketInstance.on("connect_error", (err) => {
+            console.log("🚨 Socket Connection Error:", err);
+            setLoadingHistory(false);
+        });
+
         socketInstance.on("chat:message", (m) => {
             console.log("💬 Received Live Message:", m);
             onMessage(m);
         });
+
         socketInstance.on("chat:online", (count) => setOnlineCount(count));
         socketInstance.on("chat:typing", onTyping);
 
@@ -125,6 +135,7 @@ export function useChat() {
         onlineCount,
         typingUsers,
         connected,
+        loadingHistory, 
         sendMessage,
         handleInputChange,
         senderId: user?.id || "",

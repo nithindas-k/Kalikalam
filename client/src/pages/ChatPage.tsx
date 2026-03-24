@@ -144,7 +144,7 @@ export default function ChatPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId } = useChat();
+    const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId, loadingHistory } = useChat();
     const { recording, startRecording, stopRecording, stream } = useAudioRecorder(); // 🎙️ Attached stream
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -403,7 +403,20 @@ export default function ChatPage() {
             >
                 {/* Max-width container for large screens */}
                 <div className="max-w-2xl mx-auto space-y-5">
-                    {messages.length === 0 && (
+                    {/* ⌛ Shadcn Skeleton Loading States Setup node Node flawlessly setup Node layout */}
+                    {loadingHistory ? (
+                        <div className="space-y-4">
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className={`flex items-end gap-2.5 ${i % 2 === 0 ? "flex-row" : "flex-row-reverse"}`}>
+                                    <div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />
+                                    <div className="space-y-1.5 max-w-[70%]">
+                                        <div className={`h-11 ${i % 2 === 0 ? "w-40 rounded-br-2xl rounded-tr-2xl rounded-bl-sm" : "w-48 rounded-bl-2xl rounded-tl-2xl rounded-br-sm"} bg-white/5 animate-pulse rounded-2xl`} />
+                                        <div className="h-2 w-10 bg-white/5 animate-pulse rounded-full" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-white/15">
                             <MessageCircle className="w-14 h-14" />
                             <div className="text-center">
@@ -411,9 +424,9 @@ export default function ChatPage() {
                                 <p className="text-xs mt-1">Be the first to say hi! 👋</p>
                             </div>
                         </div>
-                    )}
+                    ) : null}
 
-                    {messages.map((msg) => (
+                    {!loadingHistory && messages.map((msg) => (
                         <MessageBubble key={msg.id} msg={msg} isOwn={msg.senderId === senderId} />
                     ))}
 
