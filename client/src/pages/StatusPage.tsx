@@ -3,10 +3,9 @@ import { MapContainer, TileLayer, Marker, useMap, GeoJSON, Popup } from "react-l
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { motion } from "framer-motion";
-import { Laugh, ChevronRight, Map as MapIcon, Users } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ROUTES } from "@/constants/routes";
+import { ChevronRight, Map as MapIcon, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import Navbar from "@/components/Navbar";
 
 // --- Remove Defaults ---
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -21,7 +20,7 @@ const createAvatarIcon = (url: string, isSelected: boolean) => {
   return L.divIcon({
     html: `
       <div class="relative flex items-center justify-center">
-         <div class="w-8 h-8 rounded-full border-2 ${isSelected ? 'border-orange-500 scale-125 shadow-[0_0_15px_rgba(212,168,67,0.6)]' : 'border-[#d4a843]'} bg-black relative z-10 overflow-hidden transition-all duration-300">
+         <div class="w-8 h-8 rounded-full border-2 ${isSelected ? 'border-orange-500 scale-125 shadow-[0_0_15px_rgba(249,115,22,0.6)]' : 'border-orange-500/40'} bg-black relative z-10 overflow-hidden transition-all duration-300">
             <img src="${url}" class="w-full h-full object-cover" />
          </div>
          <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-black z-20"></div>
@@ -97,7 +96,7 @@ export default function StatusPage() {
   };
 
   const keralaStyle = {
-    fillColor: "#d4a843", weight: 2, opacity: 0.8, color: "#d4a843", fillOpacity: 0.0
+    fillColor: "#f97316", weight: 2, opacity: 0.8, color: "#f97316", fillOpacity: 0.0
   };
 
   const onEachState = (feature: any, layer: any) => {
@@ -110,7 +109,7 @@ export default function StatusPage() {
             map.fitBounds(e.target.getBounds());
          }
       },
-      mouseover: (e: any) => { e.target.setStyle({ fillOpacity: 0.3, fillColor: "#d4a843" }); },
+      mouseover: (e: any) => { e.target.setStyle({ fillOpacity: 0.3, fillColor: "#f97316" }); },
       mouseout: (e: any) => { e.target.setStyle(indiaStyle); }
     });
   };
@@ -118,36 +117,23 @@ export default function StatusPage() {
   return (
     <div className="h-screen w-full relative bg-black text-white flex flex-col font-sans overflow-hidden">
       
-      {/* 📊 ELITE HEADER */}
-      <header className="h-20 flex items-center justify-between px-6 bg-black border-b border-white/5 z-[2000]">
-         <div className="flex items-center gap-4">
-            <Link to={ROUTES.HOME} className="flex items-center gap-3">
-               <div className="w-10 h-10 bg-[#d4a843] rounded-xl flex items-center justify-center shadow-lg shadow-[#d4a843]/10">
-                  <Laugh className="w-6 h-6 text-black" />
-               </div>
-               <div className="flex flex-col">
-                  <h1 className="text-xl md:text-2xl font-black italic uppercase text-[#d4a843] tracking-tighter leading-none">HA! Connect</h1>
-                  <p className="text-[7px] md:text-[8px] uppercase font-bold text-neutral-500 tracking-[0.2em]">Live Community Network</p>
-               </div>
-            </Link>
-         </div>
+      <Navbar />
 
-         {/* MOBILE TAB TOGGLER */}
-         <div className="flex md:hidden bg-white/5 p-1 rounded-xl">
-            <button 
-               onClick={() => setActiveTab("map")}
-               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${activeTab === 'map' ? 'bg-[#d4a843] text-black' : 'text-neutral-500'}`}
-            >
-               <MapIcon className="w-3 h-3" /> Map
-            </button>
-            <button 
-               onClick={() => setActiveTab("list")}
-               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${activeTab === 'list' ? 'bg-[#d4a843] text-black' : 'text-neutral-500'}`}
-            >
-               <Users className="w-3 h-3" /> List
-            </button>
-         </div>
-      </header>
+      {/* MOBILE TAB TOGGLER - Floating Overlay */}
+      <div className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-[2005] bg-black/60 backdrop-blur-xl p-1 rounded-xl border border-white/5 flex shadow-2xl">
+         <button 
+            onClick={() => setActiveTab("map")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeTab === 'map' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-neutral-400 hover:text-white'}`}
+         >
+            <MapIcon className="w-3.5 h-3.5" /> Map
+         </button>
+         <button 
+            onClick={() => setActiveTab("list")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeTab === 'list' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-neutral-400 hover:text-white'}`}
+         >
+            <Users className="w-3.5 h-3.5" /> List
+         </button>
+      </div>
 
       <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
         
@@ -192,9 +178,9 @@ export default function StatusPage() {
                  >
                     <Popup className="premium-popup">
                        <div className="flex flex-col items-center p-2 min-w-[150px] text-center">
-                          <img src={m.image || "https://i.pravatar.cc/150"} className="w-12 h-12 rounded-full border-2 border-[#d4a843] mb-2 shadow-lg" />
+                          <img src={m.image || "https://i.pravatar.cc/150"} className="w-12 h-12 rounded-full border-2 border-orange-500 mb-2 shadow-lg" />
                           <h4 className="text-sm font-black italic uppercase text-white leading-none mb-1">{m.name}</h4>
-                          <p className="text-[9px] font-bold text-[#d4a843] uppercase tracking-widest">{m.location?.name || 'Local Hub'}</p>
+                          <p className="text-[9px] font-bold text-orange-500 uppercase tracking-widest">{m.location?.name || 'Local Hub'}</p>
                           <p className="text-[7px] text-neutral-400 uppercase font-black tracking-widest mb-2">
                              {m.location?.district || 'Kerala'} {m.location?.state ? `• ${m.location.state}` : ''}
                           </p>
@@ -229,7 +215,7 @@ export default function StatusPage() {
                 <motion.div
                   key={m._id}
                   onClick={() => { setSelectedUser(m); if(m.location) { setView('kerala'); setActiveTab('map'); } }}
-                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 ${selectedUser?._id === m._id ? 'bg-[#d4a843]/10 border-[#d4a843]/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 ${selectedUser?._id === m._id ? 'bg-orange-500/10 border-orange-500/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
                 >
                    <div className="relative">
                       <img src={m.image || "https://i.pravatar.cc/150"} className="w-11 h-11 rounded-full border border-white/10 shadow-sm" />
@@ -237,7 +223,7 @@ export default function StatusPage() {
                    </div>
                    <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold text-white truncate">{m.name}</div>
-                      <div className="text-[9px] text-[#d4a843] uppercase font-black italic tracking-widest truncate">
+                      <div className="text-[9px] text-orange-500 uppercase font-black italic tracking-widest truncate">
                          {m.location?.name || 'Local'} {m.location?.district ? `• ${m.location.district}` : ''}
                       </div>
                    </div>
@@ -247,7 +233,7 @@ export default function StatusPage() {
            </div>
 
            <div className="p-8 border-t border-white/5 mb-20 md:mb-0">
-              <button className="w-full py-4 bg-[#d4a843] text-black text-[10px] font-black uppercase italic tracking-widest rounded-xl shadow-lg active:scale-95 transition-all">
+              <button className="w-full py-4 bg-orange-500 text-black text-[10px] font-black uppercase italic tracking-widest rounded-xl shadow-lg active:scale-95 transition-all">
                  Join Elite Status
               </button>
            </div>
@@ -257,10 +243,10 @@ export default function StatusPage() {
       <style>{`
         .leaflet-container { background: #000 !important; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(212,168,67,0.2); border-radius: 10px; }
-        .premium-popup .leaflet-popup-content-wrapper { background: #000; color: white; border: 1px solid #d4a843; border-radius: 1.5rem; padding: 0.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .premium-popup .leaflet-popup-tip { background: #000; border: 1px solid #d4a843; }
-        .leaflet-popup-close-button { color: #d4a843 !important; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(249,115,22,0.2); border-radius: 10px; }
+        .premium-popup .leaflet-popup-content-wrapper { background: #000; color: white; border: 1px solid #f97316; border-radius: 1.5rem; padding: 0.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .premium-popup .leaflet-popup-tip { background: #000; border: 1px solid #f97316; }
+        .leaflet-popup-close-button { color: #f97316 !important; }
       `}</style>
     </div>
   );

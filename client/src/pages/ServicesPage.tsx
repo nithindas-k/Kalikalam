@@ -2,8 +2,9 @@ import { Timeline } from "@/components/ui/timeline";
 import { Users, Laugh, MessageSquare, Key, ShieldCheck, Mic, Lock, Video, Headphones, Fingerprint } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
+import Navbar from "@/components/Navbar";
 
-// --- REUSABLE COMPACT ANIMATED WRAPPER ---
+
 const InteractiveBox = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <motion.div
     whileHover={{ scale: 1.02, translateY: -3 }}
@@ -121,6 +122,7 @@ const VoiceAnim = () => (
    </InteractiveBox>
 );
 
+
 export default function ServicesPage() {
   const data = [
     {
@@ -210,6 +212,7 @@ export default function ServicesPage() {
   
   return (
     <div className="min-h-screen w-full relative bg-[#040404]">
+       <Navbar />
        <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.05),transparent)] pointer-events-none" />
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02] pointer-events-none" />
