@@ -104,30 +104,32 @@ io.on("connection", async (socket) => {
     // Handle incoming messages
     socket.on("chat:send", async (msg: Omit<ChatMessage, "id" | "timestamp">) => {
         console.log(`💬 Message from ${msg.senderName}: [${msg.type}]`);
+
+        // Generate ID immediate to send fully populated payload to client
+        const message: ChatMessage = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            senderId: msg.senderId || "unknown",
+            senderName: msg.senderName || "Anonymous",
+            senderImage: msg.senderImage || "",
+            type: msg.type,
+            content: msg.content,
+            timestamp: new Date().toISOString(),
+        };
+
+        // 1. Broadcast to ALL clients IMMEDIATELY for real-time responsiveness
+        io.emit("chat:message", message);
+
         try {
-            // Persist to MongoDB
-            const saved = await ChatMessageModel.create({
-                senderId: msg.senderId,
-                senderName: msg.senderName,
-                senderImage: msg.senderImage,
-                type: msg.type,
-                content: msg.content,
+            // 2. Persist to MongoDB back-end asynchronously
+            await ChatMessageModel.create({
+                senderId: message.senderId,
+                senderName: message.senderName,
+                senderImage: message.senderImage,
+                type: message.type,
+                content: message.content,
             });
-
-            const message: ChatMessage = {
-                id: saved._id.toString(),
-                senderId: saved.senderId,
-                senderName: saved.senderName,
-                senderImage: saved.senderImage,
-                type: saved.type,
-                content: saved.content,
-                timestamp: saved.createdAt.toISOString(),
-            };
-
-            // Broadcast to ALL clients
-            io.emit("chat:message", message);
         } catch (err) {
-            console.error("Failed to save message:", err);
+            console.error("🚨 Failed to save chat message to MongoDB:", err);
         }
     });
 
