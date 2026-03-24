@@ -176,19 +176,31 @@ export default function ChatPage() {
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const barWidth = 2; // 📐 Sleeker thinner bars
-            const barGap = 1.5; // 📐 tighter gap
+            const barWidth = 2.5; // 📐 Thicker bars
+            const barGap = 1.5; // 📐 Tighter gap
             let x = 0;
 
+            // 🔮 Gorgeous Gradient triggers Node flawlessly setup
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            gradient.addColorStop(0, "#f97316"); // 🟠 Orange
+            gradient.addColorStop(1, "#ec4899"); // 🌸 Pink
+
+            ctx.fillStyle = gradient;
+
             for (let i = 0; i < bufferLength; i++) {
-                // Node frequency response
-                const barHeight = (dataArray[i] / 255) * canvas.height * 0.7;
+                const barHeight = (dataArray[i] / 255) * canvas.height * 0.75;
+                const height = Math.max(barHeight, 3); // Continuous baseline 
+
+                const y = (canvas.height - height) / 2;
                 
-                // 🎨 Soft Gray/White Minimal setup layout Node Node flawlessly setup
-                ctx.fillStyle = "rgba(255, 255, 255, 0.45)"; 
-                
-                // 📐 Draw centered bars with absolute minimum height baseline flaws
-                ctx.fillRect(x, (canvas.height - Math.max(barHeight, 3)) / 2, barWidth, Math.max(barHeight, 3));
+                // 💊 Draw smooth rounded pills if supported
+                if ("roundRect" in ctx) {
+                    ctx.beginPath();
+                    (ctx as any).roundRect(x, y, barWidth, height, 1.5);
+                    ctx.fill();
+                } else {
+                    (ctx as any).fillRect(x, y, barWidth, height); 
+                }
 
                 x += barWidth + barGap;
             }
