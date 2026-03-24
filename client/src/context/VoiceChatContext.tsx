@@ -20,7 +20,11 @@ const SOCKET_URL = rawApiUrl.replace(/\/api$/, "");
 
 const configuration: RTCConfiguration = {
     iceServers: [
-        { urls: "stun:stun.l.google.com:19302" }
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:19302" },
+        { urls: "stun:stun4.l.google.com:19302" },
     ]
 };
 
@@ -36,6 +40,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
     const remoteAudiosRef = useRef<Map<string, HTMLAudioElement>>(new Map());
     const iceCandidatesQueue = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
     const userRef = useRef(user);
+    const pendingConnections = useRef<Set<string>>(new Set());
 
     useEffect(() => {
         userRef.current = user;
@@ -83,35 +88,46 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             await createPeerConnection(data.socketId, true);
         });
 
-        socket.on("voice:signal", async (data: { from: string; signal: any }) => {
+        const handleSignal = async (data: { from: string; signal: any }) => {
             let pc = peerConnections.current.get(data.from);
             
             if (data.signal.sdp) {
-                if (!pc) pc = await createPeerConnection(data.from, false);
-                await pc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
+                if (!pc) {
+                    if (pendingConnections.current.has(data.from)) {
+                        setTimeout(() => handleSignal(data), 100);
+                        return;
+                    }
+                    pc = await createPeerConnection(data.from, false);
+                }
                 
-                if (data.signal.sdp.type === "offer") {
-                    const answer = await pc.createAnswer();
-                    await pc.setLocalDescription(answer);
-                    socketRef.current?.emit("voice:signal", { to: data.from, signal: { sdp: pc.localDescription } });
+                try {
+                    await pc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
+                    if (data.signal.sdp.type === "offer") {
+                        const answer = await pc.createAnswer();
+                        await pc.setLocalDescription(answer);
+                        socketRef.current?.emit("voice:signal", { to: data.from, signal: { sdp: pc.localDescription } });
+                    }
+                    const queued = iceCandidatesQueue.current.get(data.from) || [];
+                    while (queued.length > 0) {
+                        const candidate = queued.shift();
+                        if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                    }
+                    iceCandidatesQueue.current.delete(data.from);
+                } catch (e) { 
+                    console.error("SDP error:", e);
                 }
-
-                const queued = iceCandidatesQueue.current.get(data.from) || [];
-                while (queued.length > 0) {
-                    const candidate = queued.shift();
-                    if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                }
-                iceCandidatesQueue.current.delete(data.from);
             } else if (data.signal.candidate) {
-                if (pc && pc.remoteDescription) {
-                    await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                if (pc && pc.remoteDescription && pc.signalingState !== "closed") {
+                    try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch (e) { }
                 } else {
                     const queue = iceCandidatesQueue.current.get(data.from) || [];
                     queue.push(data.signal.candidate);
                     iceCandidatesQueue.current.set(data.from, queue);
                 }
             }
-        });
+        };
+
+        socket.on("voice:signal", handleSignal);
 
         socket.on("voice:user-left", ({ socketId }: { socketId: string }) => {
             closePeerConnection(socketId);
@@ -131,9 +147,12 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
 
     const createPeerConnection = async (targetSocketId: string, isOfferor: boolean) => {
         if (peerConnections.current.has(targetSocketId)) return peerConnections.current.get(targetSocketId)!;
+        pendingConnections.current.add(targetSocketId);
 
+        console.log(`🏗️ Creating RTC for ${targetSocketId} | Offeror: ${isOfferor}`);
         const pc = new RTCPeerConnection(configuration);
         peerConnections.current.set(targetSocketId, pc);
+        pendingConnections.current.delete(targetSocketId);
 
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => {
@@ -148,6 +167,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         };
 
         pc.ontrack = (event) => {
+            console.log(`🔊 Audio stream arrived from ${targetSocketId}`);
             if (event.streams && event.streams[0]) {
                 let audio = remoteAudiosRef.current.get(targetSocketId);
                 if (!audio) {
@@ -158,6 +178,8 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
                     remoteAudiosRef.current.set(targetSocketId, audio);
                 }
                 audio.srcObject = event.streams[0];
+                audio.volume = 1;
+                audio.play().catch(e => console.warn("Autoplay block:", e));
             }
         };
 
