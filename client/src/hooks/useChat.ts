@@ -89,17 +89,7 @@ export function useChat() {
 
     const sendMessage = useCallback(
         (type: ChatMessage["type"], content: string) => {
-            const socket = socketRef.current;
-            if (!socket) {
-                console.warn("⚠️ No socket ref");
-                return;
-            }
-            if (!socket.connected) {
-                console.warn("⚠️ Socket not connected");
-                return;
-            }
             if (!content.trim()) return;
-
             const payload = {
                 senderId: getDeviceId(),
                 senderName: localStorage.getItem("visitor_name") || "Anonymous",
@@ -108,7 +98,7 @@ export function useChat() {
                 content,
             };
             console.log("📤 Emitting chat:send", payload);
-            socket.emit("chat:send", payload);
+            socketRef.current?.emit("chat:send", payload);
         },
         []
     );
