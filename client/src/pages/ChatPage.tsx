@@ -38,25 +38,29 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
                 {/* Bubble */}
                 <div
                     className={cn(
-                        "rounded-2xl px-4 py-2.5 text-[13px] sm:text-sm leading-relaxed shadow-md",
+                        "rounded-2xl text-[13px] sm:text-sm leading-relaxed shadow-md overflow-hidden",
+                        msg.type === "text" && "px-4 py-2.5",
                         isOwn
-                            ? "bg-orange-500 text-black rounded-br-md font-medium"
-                            : "bg-white/[0.07] text-white border border-white/[0.07] rounded-bl-md backdrop-blur-xl"
+                            ? msg.type === "text" && "bg-orange-500 text-black rounded-br-md font-medium"
+                            : msg.type === "text" && "bg-white/[0.07] text-white border border-white/[0.07] rounded-bl-md backdrop-blur-xl",
+                        msg.type === "image" && "bg-transparent border-0 shadow-none" // transparent for images
                     )}
                 >
                     {msg.type === "text" && <p className="break-words whitespace-pre-wrap">{msg.content}</p>}
-
+ 
                     {msg.type === "image" && (
                         <img
                             src={msg.content}
                             alt="shared"
-                            className="rounded-xl max-w-[240px] sm:max-w-[300px] max-h-[220px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                            className="rounded-2xl max-w-[240px] sm:max-w-[300px] max-h-[260px] object-cover cursor-pointer hover:opacity-95 transition-opacity"
                             onClick={() => window.open(msg.content, "_blank")}
                         />
                     )}
-
+ 
                     {msg.type === "audio" && (
-                        <audio src={msg.content} controls className="h-9 w-52 sm:w-64" />
+                        <div className="px-3 py-2">
+                             <audio src={msg.content} controls className="h-9 w-52 sm:w-64" />
+                        </div>
                     )}
                 </div>
 
