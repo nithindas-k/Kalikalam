@@ -6,6 +6,8 @@ import { useChat } from "@/hooks/useChat";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import type { ChatMessage } from "@/types/chat.types";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import ImageCropDialog from "@/components/ImageCropDialog";
 
 // ─── Message Bubble ────────────────────────────────────────────────────────────
 function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
@@ -79,6 +81,10 @@ export default function ChatPage() {
     const { messages, onlineCount, typingUsers, connected, sendMessage, handleInputChange, senderId } = useChat();
     const { recording, startRecording, stopRecording } = useAudioRecorder();
 
+    // Image Crop States
+    const [tempImage, setTempImage] = useState<string | null>(null);
+    const [showCropper, setShowCropper] = useState(false);
+
     // Auto-scroll
     const isAtBottom = () => {
         const c = messagesContainerRef.current;
@@ -121,17 +127,28 @@ export default function ChatPage() {
         }
     };
 
-    // Send image (HTTP Upload + Socket)
-    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Triggered when file input picks an item
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 10 * 1024 * 1024) { // Increase size allowance
-            alert("Image too large (max 10MB)");
-            return;
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+                toast.error("Image too large (max 10MB)");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                setTempImage(reader.result as string);
+                setShowCropper(true);
+            };
+            reader.readAsDataURL(file);
         }
+        e.target.value = "";
+    };
 
+    // Triggered after hitting 'Crop' button inside Dialog
+    const handleCropComplete = async (croppedBlob: Blob) => {
         const formData = new FormData();
-        formData.append("image", file);
+        formData.append("image", croppedBlob, "chat-image.jpg");
 
         try {
             const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/chat/upload`, {
@@ -142,9 +159,11 @@ export default function ChatPage() {
             if (data.url) sendMessage("image", data.url);
         } catch (err) {
             console.error("Upload failed:", err);
-            alert("Failed to upload image.");
+            toast.error("Failed to upload image");
+        } finally {
+            setShowCropper(false);
+            setTempImage(null);
         }
-        e.target.value = "";
     };
 
     // Send voice note (HTTP Upload + Socket)
@@ -167,7 +186,7 @@ export default function ChatPage() {
                 if (data.url) sendMessage("audio", data.url);
             } catch (err) {
                 console.error("Upload failed:", err);
-                alert("Failed to upload audio.");
+                toast.error("Failed to upload audio");
             }
         }
     };
@@ -318,6 +337,20 @@ export default function ChatPage() {
                     </p>
                 </div>
             </div>
+
+            {/* Image Crop Dialog Overlay */}
+            {tempImage && (
+                <ImageCropDialog 
+                    image={tempImage}
+                    open={showCropper}
+                    onClose={() => {
+                        setShowCropper(false);
+                        setTempImage(null);
+                    }}
+                    onCropComplete={handleCropComplete}
+                    aspectRatio={4 / 3} // Wide crop for layout feed
+                />
+            )}
         </div>
     );
 }
