@@ -11,6 +11,7 @@ import AdminVideosPage from "@/pages/admin/AdminVideosPage";
 import { ROUTES } from "@/constants/routes";
 import ProfilePage from "@/pages/admin/ProfilePage";
 import UserProfilePage from "@/pages/UserProfilePage";
+import ChatPage from "@/pages/ChatPage";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
         <Route path={ROUTES.HOME} element={<LandingPage />} />
         <Route path={ROUTES.AUDIOS} element={<AudiosPage />} />
         <Route path={ROUTES.VIDEOS} element={<VideosPage />} />
+        <Route path={ROUTES.CHAT} element={<ChatPage />} />
         <Route path={ROUTES.ADMIN_LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.ADMIN_REGISTER} element={<RegisterPage />} />
         <Route path={ROUTES.ADMIN_REQUESTS} element={<AdminRequestsPage />} />

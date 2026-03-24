@@ -1,4 +1,4 @@
-import { Mic2, Plus, LogOut, Shield, User } from "lucide-react";
+import { Mic2, Plus, LogOut, Shield, User, MessageCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,17 @@ export default function Navbar({ onAddClick }: NavbarProps) {
                                     <Button variant="ghost" size="sm" className="px-1 sm:px-2 h-8 sm:h-9 text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-muted-foreground/30 hover:text-foreground hover:bg-white/5 transition-all">
                                         Admin
                                     </Button>
+                                </Link>
+
+                                {/* Chat icon */}
+                                <Link
+                                    to={ROUTES.CHAT}
+                                    className="flex items-center hover:opacity-80 transition-opacity group"
+                                    title="Global Chat"
+                                >
+                                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-white/40 hover:text-orange-400 hover:bg-orange-500/10 transition-all">
+                                        <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    </div>
                                 </Link>
 
                                 <Link 
