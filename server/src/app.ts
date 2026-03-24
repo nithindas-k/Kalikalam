@@ -9,6 +9,7 @@ import videoRoutes from "./modules/video/video.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import { API_ROUTES } from "./constants/routes";
+import { ChatMessageModel } from "./modules/chat/chat.entity";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,20 +53,12 @@ const httpServer = http.createServer(app);
 
 const io = new SocketIOServer(httpServer, {
     cors: {
-        origin: (origin, callback) => {
-            if (!origin) return callback(null, true);
-            if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app")) {
-                callback(null, true);
-            } else {
-                callback(new Error("Not allowed by CORS"));
-            }
-        },
+        origin: true,   // allow all origins — no cookie auth needed for chat
         methods: ["GET", "POST"],
-        credentials: true,
     },
 });
 
-// In-memory chat message store (last 50 messages)
+// ─── Chat Message interface ───────────────────────────────────────────────────
 interface ChatMessage {
     id: string;
     senderId: string;
@@ -76,35 +69,66 @@ interface ChatMessage {
     timestamp: string;
 }
 
-const chatHistory: ChatMessage[] = [];
-const MAX_HISTORY = 50;
-
-io.on("connection", (socket) => {
+// ─── Socket handlers ──────────────────────────────────────────────────────────
+io.on("connection", async (socket) => {
     console.log(`🟢 Socket connected: ${socket.id}`);
 
-    // Send message history to the newly connected client
-    socket.emit("chat:history", chatHistory);
+    // Send last 50 messages from DB to the newly connected client
+    try {
+        const history = await ChatMessageModel
+            .find()
+            .sort({ createdAt: -1 })
+            .limit(50)
+            .lean();
+
+        // Reverse so oldest is first
+        const formatted: ChatMessage[] = history.reverse().map((m) => ({
+            id: (m._id as object).toString(),
+            senderId: m.senderId,
+            senderName: m.senderName,
+            senderImage: m.senderImage,
+            type: m.type,
+            content: m.content,
+            timestamp: (m.createdAt as Date).toISOString(),
+        }));
+
+        socket.emit("chat:history", formatted);
+    } catch (err) {
+        console.error("Failed to load chat history:", err);
+        socket.emit("chat:history", []);
+    }
 
     // Broadcast online user count
     io.emit("chat:online", io.engine.clientsCount);
 
     // Handle incoming messages
-    socket.on("chat:send", (msg: Omit<ChatMessage, "id" | "timestamp">) => {
+    socket.on("chat:send", async (msg: Omit<ChatMessage, "id" | "timestamp">) => {
         console.log(`💬 Message from ${msg.senderName}: [${msg.type}]`);
-        const message: ChatMessage = {
-            ...msg,
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            timestamp: new Date().toISOString(),
-        };
+        try {
+            // Persist to MongoDB
+            const saved = await ChatMessageModel.create({
+                senderId: msg.senderId,
+                senderName: msg.senderName,
+                senderImage: msg.senderImage,
+                type: msg.type,
+                content: msg.content,
+            });
 
-        // Store in history
-        chatHistory.push(message);
-        if (chatHistory.length > MAX_HISTORY) {
-            chatHistory.shift();
+            const message: ChatMessage = {
+                id: saved._id.toString(),
+                senderId: saved.senderId,
+                senderName: saved.senderName,
+                senderImage: saved.senderImage,
+                type: saved.type,
+                content: saved.content,
+                timestamp: saved.createdAt.toISOString(),
+            };
+
+            // Broadcast to ALL clients
+            io.emit("chat:message", message);
+        } catch (err) {
+            console.error("Failed to save message:", err);
         }
-
-        // Broadcast to ALL clients (including sender so they see it confirmed)
-        io.emit("chat:message", message);
     });
 
     // Typing indicator

@@ -130,14 +130,7 @@ export default function Navbar({ onAddClick }: NavbarProps) {
                             </div>
                         )}
 
-                        <Button
-                            size="sm"
-                            className="h-8 sm:h-9 px-2 sm:px-3 gap-1 sm:gap-1.5 font-bold uppercase text-[8px] sm:text-[10px] tracking-widest shadow-lg shadow-orange-600/20 bg-orange-600 hover:bg-orange-500"
-                            onClick={onAddClick}
-                        >
-                            <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                            <span className="hidden xs:inline">Add</span>
-                        </Button>
+                        
                     </div>
                 </div>
             </div>
