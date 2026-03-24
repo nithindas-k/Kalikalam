@@ -54,14 +54,14 @@ export function Sidebar({ children, className }: { children: React.ReactNode; cl
                 {/* Mobile Backdrop */}
                 {open && (
                     <div 
-                        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+                        className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
                         onClick={() => setOpen(false)}
                     />
                 )}
                 {/* Mobile Drawer */}
                 <aside 
                     className={cn(
-                        "fixed top-0 bottom-0 left-0 z-[100] w-64 bg-[#0c0c0c] border-r border-white/5 flex flex-col transition-transform duration-300 ease-out transform",
+                        "fixed top-0 bottom-0 left-0 z-[9999] w-64 bg-[#0c0c0c] border-r border-white/5 flex flex-col transition-transform duration-300 ease-out transform",
                         open ? "translate-x-0" : "-translate-x-full",
                         className
                     )}
