@@ -7,19 +7,20 @@ import { connectDB } from "./config/db";
 import audioRoutes from "./modules/audio/audio.routes";
 import videoRoutes from "./modules/video/video.routes";
 import adminRoutes from "./modules/admin/admin.routes";
+import authRoutes from "./modules/auth/auth.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import { API_ROUTES } from "./constants/routes";
 import { ChatMessageModel } from "./modules/chat/chat.entity";
-
+ 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
+ 
 const allowedOrigins = [
     process.env.CLIENT_URL,
     "http://localhost:5173",
     "http://localhost:3000",
 ].filter(Boolean) as string[];
-
+ 
 app.use(
     cors({
         origin: (origin, callback) => {
@@ -37,10 +38,11 @@ app.use(
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
+ 
 app.use(`${API_ROUTES.BASE}${API_ROUTES.AUDIOS}`, audioRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.VIDEOS}`, videoRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.ADMIN}`, adminRoutes);
+app.use(`${API_ROUTES.BASE}/auth`, authRoutes);
 
 // ─── Chat Static Media Upload Endpoint ──────────────────────────────────────
 import { upload } from "./config/multer";

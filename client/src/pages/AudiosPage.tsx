@@ -11,10 +11,13 @@ import AudioPlayer from "@/components/AudioPlayer";
 import { Button } from "@/components/ui/button";
 import { useAudios } from "@/hooks/useAudios";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import type { AudioItem, CreateAudioPayload, UpdateAudioPayload } from "@/types/audio.types";
 
 export default function AudiosPage() {
     const { audios, loading, error, addAudio, editAudio, removeAudio, fetchAudios } = useAudios();
+    const { user } = useAuth(); // 🔒 Auth guard uploads
 
     const [uploadOpen, setUploadOpen] = useState(false);
     const [editAudioItem, setEditAudioItem] = useState<AudioItem | undefined>(undefined);
@@ -22,6 +25,14 @@ export default function AudiosPage() {
     const [playingAudio, setPlayingAudio] = useState<AudioItem | null>(null);
     const [isPaused, setIsPaused] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
+    const handleAddClick = () => {
+        if (!user) {
+            toast.error("Please log in to upload clips!");
+            return;
+        }
+        setUploadOpen(true);
+    };
 
     // Filter audios based on search query
     const filteredAudios = useMemo(() => {
@@ -99,7 +110,7 @@ export default function AudiosPage() {
                             >
                                 <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
                             </Button>
-                            <Button onClick={() => setUploadOpen(true)} className="h-9 px-3 gap-2 font-bold transition-transform active:scale-95">
+                            <Button onClick={handleAddClick} className="h-9 px-3 gap-2 font-bold transition-transform active:scale-95">
                                 <Plus className="w-4 h-4" />
                                 <span>Add</span>
                             </Button>
@@ -123,7 +134,7 @@ export default function AudiosPage() {
                             >
                                 <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
                             </Button>
-                            <Button onClick={() => setUploadOpen(true)} className="h-9 px-4 gap-2 font-bold transition-transform active:scale-95">
+                            <Button onClick={handleAddClick} className="h-9 px-4 gap-2 font-bold transition-transform active:scale-95">
                                 <Plus className="w-4 h-4" />
                                 <span>Add Clip</span>
                             </Button>
@@ -147,7 +158,7 @@ export default function AudiosPage() {
                     </Button>
                 </div>
             ) : audios.length === 0 ? (
-                <EmptyState onAddClick={() => setUploadOpen(true)} />
+                <EmptyState onAddClick={handleAddClick} />
             ) : filteredAudios.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
                     <div className="w-20 h-20 rounded-full bg-secondary/50 flex items-center justify-center mb-4 border border-border/50 shadow-sm transition-transform hover:scale-105 duration-300">

@@ -1,31 +1,15 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import type { ChatMessage, TypingIndicator } from "@/types/chat.types";
-import { getDeviceId } from "@/utils/device";
+import { useAuth } from "@/context/AuthContext";
 
 const SOCKET_URL = import.meta.env.VITE_API_BASE_URL
     ? import.meta.env.VITE_API_BASE_URL.replace("/api", "")
     : "http://localhost:5000";
 
-
-let _socket: Socket | null = null;
-
-function getOrCreateSocket(): Socket {
-    if (_socket) return _socket;
-    _socket = io(SOCKET_URL, {
-        transports: ["websocket"],
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        timeout: 10000,
-    });
-    return _socket;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 export function useChat() {
-    const socketRef = useRef<Socket | null>(null);
+    const { user, token } = useAuth();
+    const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [onlineCount, setOnlineCount] = useState(0);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -33,38 +17,32 @@ export function useChat() {
     const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        const socket = getOrCreateSocket();
-        socketRef.current = socket;
+        if (!token) return;
 
-        const onConnect = () => {
-            console.log("✅ Socket connected:", socket.id);
-            setConnected(true);
-        };
-        const onDisconnect = (reason: string) => {
-            console.log("❌ Socket disconnected:", reason);
-            setConnected(false);
-        };
+        const socketInstance = io(SOCKET_URL, {
+            transports: ["websocket"],
+            reconnection: true,
+            auth: { token }, // 🔒 Send token to backend
+        });
+
+        setSocket(socketInstance);
+
         const onHistory = (history: ChatMessage[]) => setMessages(history);
         const onMessage = (msg: ChatMessage) => {
-            console.log("Receive Broadcast 📨:", msg);
             setMessages((prev) => {
-                // If this is OUR own message returning from the server, 
-                // replace the optimistic one with the real one.
-                const isOwn = msg.senderId === getDeviceId();
+                const isOwn = user && msg.senderId === user.id;
                 if (isOwn) {
                     const optimisticIndex = prev.findIndex(m => m.id.startsWith("optimistic-") && m.content === msg.content);
                     if (optimisticIndex !== -1) {
                         const next = [...prev];
-                        next[optimisticIndex] = msg; // Update with real DB ID
+                        next[optimisticIndex] = msg;
                         return next;
                     }
                 }
-
                 if (prev.some((m) => m.id === msg.id)) return prev;
                 return [...prev, msg];
             });
         };
-        const onOnline = (count: number) => setOnlineCount(count);
         const onTyping = ({ senderName: name, isTyping }: TypingIndicator) => {
             setTypingUsers((prev) => {
                 if (isTyping && !prev.includes(name)) return [...prev, name];
@@ -73,54 +51,36 @@ export function useChat() {
             });
         };
 
-        socket.on("connect", onConnect);
-        socket.on("disconnect", onDisconnect);
-        socket.on("chat:history", onHistory);
-        socket.on("chat:message", onMessage);
-        socket.on("chat:online", onOnline);
-        socket.on("chat:typing", onTyping);
+        socketInstance.on("connect", () => setConnected(true));
+        socketInstance.on("disconnect", () => setConnected(false));
+        socketInstance.on("chat:history", onHistory);
+        socketInstance.on("chat:message", onMessage);
+        socketInstance.on("chat:online", (count) => setOnlineCount(count));
+        socketInstance.on("chat:typing", onTyping);
 
-        // Sync state if already connected
-        if (socket.connected) {
-            setConnected(true);
-        } else {
-            socket.connect();
-        }
-
-        // Cleanup: only remove listeners — DO NOT disconnect the singleton socket
         return () => {
-            socket.off("connect", onConnect);
-            socket.off("disconnect", onDisconnect);
-            socket.off("chat:history", onHistory);
-            socket.off("chat:message", onMessage);
-            socket.off("chat:online", onOnline);
-            socket.off("chat:typing", onTyping);
+            socketInstance.disconnect();
         };
-    }, []);
+    }, [token, user]);
 
     const sendMessage = useCallback(
         (type: ChatMessage["type"], content: string) => {
-            if (!content.trim()) return;
+            if (!content.trim() || !user || !socket) return;
 
-            // 1. Create Optimistic Message Payload immediately
             const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
             const payload: ChatMessage = {
                 id: optimisticId,
-                senderId: getDeviceId(),
-                senderName: localStorage.getItem("visitor_name") || "Anonymous",
-                senderImage: localStorage.getItem("visitor_image") || "",
+                senderId: user.id,
+                senderName: user.name,
+                senderImage: user.image || "",
                 type,
                 content: content.trim(),
                 timestamp: new Date().toISOString(),
             };
 
-            // 2. Append directly to local UI state for absolute zero-delay
             setMessages((prev) => [...prev, payload]);
 
-            console.log("📤 Emitting chat:send", payload);
-
-            // 3. Emit Omit IDs and match server signature
-            socketRef.current?.emit("chat:send", {
+            socket.emit("chat:send", {
                 senderId: payload.senderId,
                 senderName: payload.senderName,
                 senderImage: payload.senderImage,
@@ -128,15 +88,16 @@ export function useChat() {
                 content: payload.content,
             });
         },
-        []
+        [user, socket]
     );
 
     const sendTyping = useCallback((isTyping: boolean) => {
-        socketRef.current?.emit("chat:typing", {
-            senderName: localStorage.getItem("visitor_name") || "Anonymous",
+        if (!user || !socket) return;
+        socket.emit("chat:typing", {
+            senderName: user.name,
             isTyping,
         });
-    }, []);
+    }, [user, socket]);
 
     const handleInputChange = useCallback(() => {
         sendTyping(true);
@@ -151,8 +112,8 @@ export function useChat() {
         connected,
         sendMessage,
         handleInputChange,
-        senderId: getDeviceId(),
-        senderName: localStorage.getItem("visitor_name") || "Anonymous",
-        senderImage: localStorage.getItem("visitor_image") || "",
+        senderId: user?.id || "",
+        senderName: user?.name || "Anonymous",
+        senderImage: user?.image || "",
     };
 }

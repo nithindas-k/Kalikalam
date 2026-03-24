@@ -11,10 +11,13 @@ import VideoPlayer from "@/components/VideoPlayer";
 import { Button } from "@/components/ui/button";
 import { useVideos } from "@/hooks/useVideos";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import type { VideoItem } from "@/types/video.types";
 
 export default function VideosPage() {
     const { videos, loading, error, addVideo, updateVideo, removeVideo, fetchVideos } = useVideos();
+    const { user } = useAuth(); // 🔒 Auth guard uploads
 
     const [uploadOpen, setUploadOpen] = useState(false);
     const [editVideoItem, setEditVideoItem] = useState<VideoItem | undefined>(undefined);
@@ -22,6 +25,14 @@ export default function VideosPage() {
     const [playingVideo, setPlayingVideo] = useState<VideoItem | null>(null);
     const [isPaused, setIsPaused] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
+    const handleAddClick = () => {
+        if (!user) {
+            toast.error("Please log in to upload videos!");
+            return;
+        }
+        setUploadOpen(true);
+    };
 
     const filteredVideos = useMemo(() => {
         if (!searchQuery.trim()) return videos;
@@ -92,7 +103,7 @@ export default function VideosPage() {
                             <Button variant="ghost" size="icon" onClick={fetchVideos} className="h-9 w-9 text-muted-foreground hover:text-foreground">
                                 <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
                             </Button>
-                            <Button onClick={() => setUploadOpen(true)} className="h-9 px-3 gap-2 font-bold transition-transform active:scale-95">
+                            <Button onClick={handleAddClick} className="h-9 px-3 gap-2 font-bold transition-transform active:scale-95">
                                 <Plus className="w-4 h-4" />
                                 <span className="hidden xs:inline">Add</span>
                             </Button>
@@ -107,7 +118,7 @@ export default function VideosPage() {
                             <Button variant="ghost" size="icon" onClick={fetchVideos} className="h-9 w-9 text-muted-foreground hover:text-foreground">
                                 <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
                             </Button>
-                            <Button onClick={() => setUploadOpen(true)} className="h-9 px-4 gap-2 font-bold transition-transform active:scale-95">
+                            <Button onClick={handleAddClick} className="h-9 px-4 gap-2 font-bold transition-transform active:scale-95">
                                 <Plus className="w-4 h-4" />
                                 <span>Add Video</span>
                             </Button>
@@ -131,7 +142,7 @@ export default function VideosPage() {
                     </Button>
                 </div>
             ) : videos.length === 0 ? (
-                <EmptyState onAddClick={() => setUploadOpen(true)} />
+                <EmptyState onAddClick={handleAddClick} />
             ) : filteredVideos.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
                     <div className="w-20 h-20 rounded-full bg-secondary/50 flex items-center justify-center mb-4 border border-border/50 shadow-sm transition-transform hover:scale-105 duration-300">

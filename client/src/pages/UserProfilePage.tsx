@@ -7,23 +7,32 @@ import { ROUTES } from "@/constants/routes";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import ImageCropDialog from "@/components/ImageCropDialog";
+import { GoogleLogin } from "@react-oauth/google";
+import { useAuth } from "@/context/AuthContext";
 
 export default function UserProfilePage() {
     const navigate = useNavigate();
+    const { user, login, logout } = useAuth();
+    
     const [name, setName] = useState("");
     const [image, setImage] = useState<string | null>(null);
     const [tempImage, setTempImage] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
     const [saving, setSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { updateUser } = useAuth(); // for saving state updates
 
-    // Load from local storage
     useEffect(() => {
-        const savedName = localStorage.getItem("visitor_name");
-        const savedImage = localStorage.getItem("visitor_image");
-        if (savedName) setName(savedName);
-        if (savedImage) setImage(savedImage);
-    }, []);
+        if (user) {
+            setName(user.name);
+            if (user.image) setImage(user.image);
+        } else {
+            const savedName = localStorage.getItem("visitor_name");
+            const savedImage = localStorage.getItem("visitor_image");
+            if (savedName) setName(savedName);
+            if (savedImage) setImage(savedImage);
+        }
+    }, [user]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -54,19 +63,28 @@ export default function UserProfilePage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            localStorage.setItem("visitor_name", name.trim());
-            if (image) {
-                localStorage.setItem("visitor_image", image);
+            if (user) {
+                // 🔒 1. Authenticated Save (HTTP Endpoint)
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/auth/profile/${user.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: name.trim(), image }),
+                });
+                const data = await res.json();
+                if (data.user) {
+                    updateUser(data.user);
+                    toast.success("Profile updated on server");
+                }
             } else {
-                localStorage.removeItem("visitor_image");
+                // 2. Legacy Fallback
+                localStorage.setItem("visitor_name", name.trim());
+                if (image) localStorage.setItem("visitor_image", image);
+                toast.success("Local profile saved");
             }
             
-            await new Promise(resolve => setTimeout(resolve, 600));
-            toast.success("Profile saved");
-            window.dispatchEvent(new Event("visitor-profile-updated"));
             navigate(ROUTES.HOME);
         } catch (error) {
-            toast.error("Failed to save");
+            toast.error("Failed to save profile");
         } finally {
             setSaving(false);
         }
@@ -133,6 +151,40 @@ export default function UserProfilePage() {
                         )}
                     </div>
 
+                    {/* Google Login Component */}
+                    {!user && (
+                        <div className="flex flex-col items-center gap-4 py-4">
+                            <p className="text-xs font-semibold text-gray-400">Sign in to sync your profile across devices:</p>
+                            <div className="w-full flex justify-center">
+                                <GoogleLogin 
+                                    onSuccess={async (credentialResponse) => {
+                                        if (credentialResponse.credential) {
+                                            try {
+                                                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/auth/google`, {
+                                                    method: "POST",
+                                                    headers: { "Content-Type": "application/json" },
+                                                    body: JSON.stringify({ credential: credentialResponse.credential }),
+                                                });
+                                                const data = await res.json();
+                                                if (data.token && data.user) {
+                                                    login(data.token, data.user);
+                                                    setName(data.user.name);
+                                                    setImage(data.user.image);
+                                                    toast.success("Logged in with Google!");
+                                                }
+                                            } catch (err) {
+                                                toast.error("Google Login Failed");
+                                            }
+                                        }
+                                    }}
+                                    onError={() => toast.error("Google Login Cancelled")}
+                                    theme="filled_black"
+                                    shape="circle"
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     {/* Name Input - Minimalist */}
                     <div className="space-y-2">
                         <Input 
@@ -141,7 +193,7 @@ export default function UserProfilePage() {
                             placeholder="Your Name"
                             className="bg-transparent border-0 border-b border-white/5 rounded-none text-2xl font-bold text-center h-16 focus-visible:ring-0 focus:border-orange-500/50 transition-colors placeholder:text-gray-800"
                         />
-                        <p className="text-[10px] text-center text-gray-600 font-medium uppercase tracking-[0.2em]">Private & Local Identity</p>
+                        <p className="text-[10px] text-center text-gray-600 font-medium uppercase tracking-[0.2em]">{user ? "Authenticated Google Profile" : "Private & Local Identity"}</p>
                     </div>
 
                     <div className="pt-8 space-y-4">
@@ -152,6 +204,20 @@ export default function UserProfilePage() {
                         >
                             {saving ? "Updating..." : "Save Profile"}
                         </Button>
+
+                        {user && (
+                            <Button 
+                                variant="destructive" 
+                                onClick={() => {
+                                    logout();
+                                    toast.success("Logged out successfully");
+                                    navigate(ROUTES.HOME);
+                                }}
+                                className="w-full h-14 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl transition-all"
+                            >
+                                Log out
+                            </Button>
+                        )}
                         
                         <Button 
                             variant="ghost" 
