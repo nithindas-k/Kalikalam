@@ -37,6 +37,20 @@ export const authService = {
         return response.data;
     },
 
+    async updateProfile(formData: FormData) {
+        const token = this.getToken();
+        const response = await axios.put(`${API_URL}/admin/profile`, formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+            }
+        });
+        if (response.data.admin) {
+            localStorage.setItem("admin_data", JSON.stringify(response.data.admin));
+        }
+        return response.data;
+    },
+
     logout() {
         localStorage.removeItem("admin_token");
         localStorage.removeItem("admin_data");

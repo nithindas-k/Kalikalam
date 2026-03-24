@@ -4,6 +4,8 @@ export interface IAdmin extends Document {
     email: string;
     password: string;
     status: "approved" | "pending" | "rejected";
+    name: string;
+    profileImage?: string;
 }
 
 const adminSchema: Schema = new Schema(
@@ -24,6 +26,13 @@ const adminSchema: Schema = new Schema(
             type: String,
             enum: ["approved", "pending", "rejected"],
             default: "pending",
+        },
+        name: {
+            type: String,
+            default: "Admin",
+        },
+        profileImage: {
+            type: String,
         },
     },
     {

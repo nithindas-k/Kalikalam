@@ -67,6 +67,8 @@ export const loginAdmin = async (req: Request, res: Response) => {
                 _id: admin._id,
                 email: admin.email,
                 status: admin.status,
+                name: admin.name,
+                profileImage: admin.profileImage,
                 token: generateToken(String(admin._id)),
             });
         } else {
@@ -102,6 +104,27 @@ export const updateAdminStatus = async (req: Request, res: Response) => {
         }
 
         res.json({ message: `Admin status updated to ${status}`, admin });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+export const updateAdminProfile = async (req: any, res: Response) => {
+    try {
+        const { name } = req.body;
+        const updateData: any = { name };
+
+        if (req.file) {
+            updateData.profileImage = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+        }
+
+        const admin = await Admin.findByIdAndUpdate(req.admin.id, updateData, { new: true }).select("-password");
+
+        if (!admin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        res.json({ message: "Profile updated successfully", admin });
     } catch (error) {
         res.status(500).json({ message: "Server error", error });
     }

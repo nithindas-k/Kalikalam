@@ -5,7 +5,8 @@ import {
     Mic2,
     Video,
     ChevronRight,
-    LogOut
+    LogOut,
+    User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,11 @@ export default function AdminSidebar() {
             title: "Videos",
             icon: Video,
             path: ROUTES.ADMIN_VIDEOS,
+        },
+        {
+            title: "Profile",
+            icon: User,
+            path: ROUTES.PROFILE,
         },
     ];
 
