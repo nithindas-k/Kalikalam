@@ -16,6 +16,36 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
         minute: "2-digit",
     });
 
+    // Custom Audio Player State
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [duration, setDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
+
+    const togglePlay = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play().catch(console.error);
+        }
+    };
+
+    const handleLoadedMetadata = () => {
+        if (audioRef.current) setDuration(audioRef.current.duration);
+    };
+
+    const handleTimeUpdate = () => {
+        if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+    };
+
+    const formatTime = (time: number) => {
+        if (isNaN(time)) return "0:00";
+        const mins = Math.floor(time / 60);
+        const secs = Math.floor(time % 60);
+        return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    };
+
     return (
         <div className={cn("flex items-end gap-2.5", isOwn ? "flex-row-reverse" : "flex-row")}>
             {/* Avatar */}
@@ -39,15 +69,15 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
                 <div
                     className={cn(
                         "rounded-2xl text-[13px] sm:text-sm leading-relaxed shadow-md overflow-hidden",
-                        msg.type === "text" && "px-4 py-2.5",
+                        msg.type !== "image" && "px-4 py-2.5",
                         isOwn
-                            ? msg.type === "text" && "bg-orange-500 text-black rounded-br-md font-medium"
-                            : msg.type === "text" && "bg-white/[0.07] text-white border border-white/[0.07] rounded-bl-md backdrop-blur-xl",
-                        msg.type === "image" && "bg-transparent border-0 shadow-none" // transparent for images
+                            ? msg.type !== "image" && "bg-orange-500 text-black rounded-br-md font-medium"
+                            : msg.type !== "image" && "bg-white/[0.07] text-white border border-white/[0.07] rounded-bl-md backdrop-blur-xl",
+                        msg.type === "image" && "bg-transparent border-0 shadow-none"
                     )}
                 >
                     {msg.type === "text" && <p className="break-words whitespace-pre-wrap">{msg.content}</p>}
- 
+
                     {msg.type === "image" && (
                         <img
                             src={msg.content}
@@ -56,10 +86,44 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
                             onClick={() => window.open(msg.content, "_blank")}
                         />
                     )}
- 
+
                     {msg.type === "audio" && (
-                        <div className="px-3 py-2">
-                             <audio src={msg.content} controls className="h-9 w-52 sm:w-64" />
+                        <div className="flex items-center gap-3 w-48 sm:w-56 py-1">
+                            <audio 
+                                ref={audioRef} 
+                                src={msg.content} 
+                                onPlay={() => setIsPlaying(true)}
+                                onPause={() => setIsPlaying(false)}
+                                onEnded={() => setIsPlaying(false)}
+                                onLoadedMetadata={handleLoadedMetadata}
+                                onTimeUpdate={handleTimeUpdate}
+                                className="hidden" 
+                            />
+                            {/* Custom Play/Pause Button */}
+                            <button
+                                onClick={togglePlay}
+                                className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 flex items-center justify-center transition-all flex-shrink-0"
+                            >
+                                {isPlaying ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-current"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-current translate-x-0.5"><path d="M5 3l14 9-14 9z" /></svg>
+                                )}
+                            </button>
+
+                            {/* Custom Waveform / Progress */}
+                            <div className="flex-1 flex flex-col gap-1">
+                                <div className="h-1 bg-black/10 rounded-full w-full overflow-hidden relative">
+                                    <div 
+                                        className="absolute left-0 top-0 h-full bg-current rounded-full" 
+                                        style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between text-[9px] opacity-60">
+                                    <span>{formatTime(currentTime)}</span>
+                                    <span>{formatTime(duration)}</span>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
