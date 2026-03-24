@@ -9,6 +9,7 @@ import videoRoutes from "./modules/video/video.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import authRoutes from "./modules/auth/auth.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
+import pushRoutes, { sendPushToAllUsers } from "./modules/push/push.routes";
 import { API_ROUTES } from "./constants/routes";
 import { ChatMessageModel } from "./modules/chat/chat.entity";
 import { UserModel } from "./modules/auth/auth.model";
@@ -44,6 +45,7 @@ app.use(`${API_ROUTES.BASE}${API_ROUTES.AUDIOS}`, audioRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.VIDEOS}`, videoRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.ADMIN}`, adminRoutes);
 app.use(`${API_ROUTES.BASE}/auth`, authRoutes);
+app.use(`${API_ROUTES.BASE}/push`, pushRoutes);
 
 
 import { upload } from "./config/multer";
@@ -158,16 +160,24 @@ io.on("connection", async (socket) => {
                 type: message.type,
                 content: message.content,
             });
+
+
+            sendPushToAllUsers({
+                title: message.senderName,
+                body: message.type === "text" ? message.content : `[${message.type}]`,
+                icon: message.senderImage || "/favicon.ico",
+                data: { url: "/chat" }
+            }, message.senderId);
         } catch (err) {
             console.error("🚨 Failed to save chat message to MongoDB:", err);
         }
     });
 
-    // ─── Voice Chat handlers ──────────────────────────────────────────────────
+    
     socket.on("voice:join", (user: { id: string; name: string; avatar: string }) => {
         console.log(`🎙️ User joined voice: ${user.name} (${socket.id})`);
         
-        // Add participant index
+       
         voiceParticipants.set(socket.id, {
             id: user.id,
             name: user.name,
@@ -176,9 +186,17 @@ io.on("connection", async (socket) => {
             isSpeaking: false
         });
 
-        // 1. Send CURRENT state list back to EVERYONE including the newly joined guy
+       
         const others = Array.from(voiceParticipants.values()).filter(p => p.socketId !== socket.id);
         io.emit("voice:participants", Array.from(voiceParticipants.values()));
+
+        // 3. Send PUSH notification to everyone about the new joiner
+        sendPushToAllUsers({
+            title: "Voice Chat",
+            body: `${user.name} joined the voice room!`,
+            icon: user.avatar || "/favicon.ico",
+            data: { url: "/voice" }
+        }, user.id);
 
         // 2. Broadcast to everyone else that a new guy joined so they create RTCPeerConnection Offer
         socket.broadcast.emit("voice:user-joined", {

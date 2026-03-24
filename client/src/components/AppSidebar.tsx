@@ -1,6 +1,8 @@
 import { Link, useLocation } from "react-router-dom"
-import { Mic2, MessageCircle, Music, Play, User, Shield, LogOut } from "lucide-react"
+import { Mic2, MessageCircle, Music, Play, User, Shield, LogOut, Bell, Smartphone } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
+import { registerPushNotifications } from "@/lib/push-notifications"
+import { useEffect, useState } from "react"
 import { authService } from "@/services/authService"
 import { ROUTES } from "@/constants/routes"
 import {
@@ -24,6 +26,43 @@ export function AppSidebar() {
     const { user } = useAuth()
     const isAdmin = authService.isAuthenticated()
     const { open, setOpen, isMobile } = useSidebar()
+    const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default")
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: any) => {
+            e.preventDefault()
+            setDeferredPrompt(e)
+        }
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+        }
+    }, [])
+
+    const handleInstallApp = async () => {
+        if (!deferredPrompt) return
+        deferredPrompt.prompt()
+        const { outcome } = await deferredPrompt.userChoice
+        if (outcome === 'accepted') {
+            setDeferredPrompt(null)
+        }
+    }
+
+    useEffect(() => {
+        if ("Notification" in window) {
+            setNotificationPermission(Notification.permission)
+        }
+    }, [])
+
+    const handleEnableNotifications = async () => {
+        if (user) {
+            await registerPushNotifications(user.id)
+            setNotificationPermission(Notification.permission)
+        }
+    }
 
     const navItems = [
         { label: "Home", path: ROUTES.HOME, icon: Mic2 },
@@ -109,6 +148,31 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     )}
+
+                    {user && notificationPermission === "default" && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton 
+                                onClick={handleEnableNotifications}
+                                className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/5"
+                            >
+                                <Bell className="w-4 h-4" />
+                                {open && <span className="opacity-80 animate-in fade-in duration-200">Enable Notifications</span>}
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+
+                    {deferredPrompt && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton 
+                                onClick={handleInstallApp}
+                                className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/5"
+                            >
+                                <Smartphone className="w-4 h-4" />
+                                {open && <span className="opacity-80 animate-in fade-in duration-200">Install as App</span>}
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+
                     
                     {isAdmin && (
                         <SidebarMenuItem>

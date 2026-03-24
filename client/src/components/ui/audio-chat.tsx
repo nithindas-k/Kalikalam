@@ -27,6 +27,16 @@ const AVATAR_SIZE_COLLAPSED = 44
 const AVATAR_SIZE_EXPANDED = 44
 const AVATAR_OVERLAP = -12
 
+const MOCK_PARTICIPANTS: Participant[] = [
+  { id: "mock-1", name: "Oğuz", avatar: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/attachments/gen-images/public/man-with-sunglasses-profile-artistic-3Q0PBah5WBqwZeeWGCWABFOpCyhcmD.jpg", isSpeaking: true },
+  { id: "mock-2", name: "Ashish", avatar: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/attachments/gen-images/public/man-with-cap-colorful-gradient-background-k6UaFzKucKJ2tzaK32l1XFTkv5dPAS.jpg" },
+  { id: "mock-3", name: "Mariana", avatar: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/attachments/gen-images/public/person-with-winter-hat-scarf-cold-5KFfWSpCqM4Ksf7yXgiVhxSweVw5tH.jpg" },
+  { id: "mock-4", name: "MDS", avatar: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/attachments/gen-images/public/silhouette-dark-artistic-portrait-HUaRj3gVUuhrGF2L8HaOGlawK4EAfZ.jpg" },
+  { id: "mock-5", name: "Ana", avatar: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/attachments/gen-images/public/woman-smiling-outdoor-background-M1BHNIp7XAzAPWwbIbY47V6WEFk703.jpg" },
+  { id: "mock-6", name: "Natko", avatar: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/attachments/gen-images/public/man-with-beard-hoodie-casual-tx32EFYsG69NBSuftk3cN16mOegxOe.jpg", isSpeaking: true },
+  { id: "mock-7", name: "Afshin", avatar: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/attachments/gen-images/public/man-with-sunglasses-red-shirt-blue-background-KvK2BMFg07EE8rLsTSQ8891UfCcSIV.jpg" },
+];
+
 function SpeakingIndicator({ show }: { show: boolean }) {
   return (
     <div
@@ -115,7 +125,10 @@ export function VoiceChat({
   onClose
 }: VoiceChatProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const overflowCount = participants.length > 4 ? participants.length - 4 : 0
+  
+  const isMocked = !isConnected && participants.length === 0;
+  const displayParticipants = isMocked ? MOCK_PARTICIPANTS : participants;
+  const overflowCount = displayParticipants.length > 4 ? displayParticipants.length - 4 : 0;
 
   return (
     <>
@@ -163,6 +176,8 @@ export function VoiceChat({
           </div>
         )}
 
+        {/* Empty state on Collapsed (Obsolete with mocks) */}
+
         {/* Header */}
         <div
           className={cn(
@@ -198,7 +213,7 @@ export function VoiceChat({
           style={{ top: 52 }}
         />
 
-        {participants.map((participant, index) => {
+        {displayParticipants.map((participant, index) => {
           const pos = getAvatarPosition(index, isExpanded)
           const delay = isExpanded ? index * 30 : (6 - index) * 20
 
@@ -249,6 +264,9 @@ export function VoiceChat({
             </div>
           )
         })}
+
+        {/* Empty state on Expanded (Obsolete with Mocks) */}
+
 
         {/* Bottom Actions */}
         {!isConnected ? (
