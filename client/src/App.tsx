@@ -10,6 +10,7 @@ import AdminAudiosPage from "@/pages/admin/AdminAudiosPage";
 import AdminVideosPage from "@/pages/admin/AdminVideosPage";
 import { ROUTES } from "@/constants/routes";
 import ProfilePage from "@/pages/admin/ProfilePage";
+import UserProfilePage from "@/pages/UserProfilePage";
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path={ROUTES.ADMIN_AUDIOS} element={<AdminAudiosPage />} />
         <Route path={ROUTES.ADMIN_VIDEOS} element={<AdminVideosPage />} />
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+        <Route path={ROUTES.USER_PROFILE} element={<UserProfilePage />} />
         <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
       </Routes>
     </BrowserRouter>

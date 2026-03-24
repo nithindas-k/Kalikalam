@@ -47,6 +47,8 @@ export default function AdminSidebar() {
         navigate(ROUTES.HOME);
     };
 
+    const adminData = authService.getAdminData();
+
     return (
         <aside className="w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col h-full overflow-hidden">
             {/* Logo Section */}
@@ -93,7 +95,21 @@ export default function AdminSidebar() {
             </nav>
 
             {/* Footer Section */}
-            <div className="p-4 border-t border-white/5 bg-black/20">
+            <div className="p-4 border-t border-white/5 bg-black/20 space-y-4">
+                <Link to={ROUTES.PROFILE} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group">
+                    <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center shrink-0">
+                        {adminData?.profileImage ? (
+                            <img src={adminData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <User className="w-5 h-5 text-gray-500" />
+                        )}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{adminData?.name || "Admin"}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{adminData?.email || "admin@kalikalam.com"}</p>
+                    </div>
+                </Link>
+
                 <Button
                     variant="ghost"
                     className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-3 rounded-xl py-6"

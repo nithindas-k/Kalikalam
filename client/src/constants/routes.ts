@@ -8,4 +8,5 @@ export const ROUTES = {
     ADMIN_AUDIOS: "/admin/audios",
     ADMIN_VIDEOS: "/admin/videos",
     PROFILE: "/profile",
+    USER_PROFILE: "/user/profile",
 } as const;

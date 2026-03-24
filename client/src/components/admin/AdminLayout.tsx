@@ -1,9 +1,12 @@
 import React from "react";
 import AdminSidebar from "./AdminSidebar";
-import { Menu } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { authService } from "@/services/authService";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 
 interface AdminLayoutProps {
     children: React.ReactNode;
@@ -46,7 +49,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         <Menu className="w-6 h-6" />
                     </Button>
                     <span className="text-xl font-bold text-white tracking-tight">Kali<span className="text-orange-500">kalam</span></span>
-                    <div className="w-10" /> {/* Spacer */}
+                    
+                    <Link to={ROUTES.PROFILE} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full ring-offset-background transition-shadow">
+                        <div className="w-9 h-9 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center">
+                            {authService.getAdminData()?.profileImage ? (
+                                <img src={authService.getAdminData().profileImage} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-5 h-5 text-gray-500" />
+                            )}
+                        </div>
+                    </Link>
                 </header>
 
                 {/* Sub-header / Breadcrumbs (Optional) */}
