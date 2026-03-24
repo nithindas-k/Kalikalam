@@ -13,7 +13,7 @@ let _socket: Socket | null = null;
 function getOrCreateSocket(): Socket {
     if (_socket) return _socket;
     _socket = io(SOCKET_URL, {
-        transports: ["polling", "websocket"],
+        transports: ["websocket"],
         reconnection: true,
         reconnectionAttempts: Infinity,
         reconnectionDelay: 1000,
