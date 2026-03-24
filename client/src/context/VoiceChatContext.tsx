@@ -33,7 +33,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
-    
+
     const socketRef = useRef<Socket | null>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
     const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
@@ -41,17 +41,22 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
     const iceCandidatesQueue = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
     const userRef = useRef(user);
     const pendingConnections = useRef<Set<string>>(new Set());
+    const isConnectedRef = useRef(isConnected);
 
     useEffect(() => {
         userRef.current = user;
     }, [user]);
 
+    useEffect(() => {
+        isConnectedRef.current = isConnected;
+    }, [isConnected]);
+
     const emitJoin = () => {
         const currentUser = userRef.current;
-        const userProfile = { 
-            id: (currentUser as any)?._id || (currentUser as any)?.id || `${Date.now()}`, 
-            name: currentUser?.name || "Anonymous", 
-            avatar: currentUser?.image || "" 
+        const userProfile = {
+            id: (currentUser as any)?._id || (currentUser as any)?.id || `${Date.now()}`,
+            name: currentUser?.name || "Anonymous",
+            avatar: currentUser?.image || ""
         };
         console.log("📤 Emitting voice:join", userProfile);
         socketRef.current?.emit("voice:join", userProfile);
@@ -66,11 +71,9 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         socketRef.current = socket;
 
         socket.on("connect", () => {
-            console.log("🎙️ Socket connected to voice server");
+            console.log("🎙️ Socket connected to voice server", socket.id);
             if (sessionStorage.getItem("voice_active") === "true") {
-                console.log("🔄 Re-syncing voice join after reconnect/reload");
-                // We don't call joinVoice directly here to avoid permission loops, 
-                // but if isConnected is already true (reconnect), we emitJoin.
+                emitJoin();
             }
         });
 
@@ -90,7 +93,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
 
         const handleSignal = async (data: { from: string; signal: any }) => {
             let pc = peerConnections.current.get(data.from);
-            
+
             if (data.signal.sdp) {
                 if (!pc) {
                     if (pendingConnections.current.has(data.from)) {
@@ -99,7 +102,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
                     }
                     pc = await createPeerConnection(data.from, false);
                 }
-                
+
                 try {
                     await pc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
                     if (data.signal.sdp.type === "offer") {
@@ -113,12 +116,12 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
                         if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
                     }
                     iceCandidatesQueue.current.delete(data.from);
-                } catch (e) { 
+                } catch (e) {
                     console.error("SDP error:", e);
                 }
             } else if (data.signal.candidate) {
                 if (pc && pc.remoteDescription && pc.signalingState !== "closed") {
-                    try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch (e) { }
+                    try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch { }
                 } else {
                     const queue = iceCandidatesQueue.current.get(data.from) || [];
                     queue.push(data.signal.candidate);
@@ -133,7 +136,6 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             closePeerConnection(socketId);
         });
 
-        // Auto-rejoin logic for reload
         if (sessionStorage.getItem("voice_active") === "true") {
             setTimeout(() => {
                 joinVoice().catch(console.error);
@@ -149,7 +151,6 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         if (peerConnections.current.has(targetSocketId)) return peerConnections.current.get(targetSocketId)!;
         pendingConnections.current.add(targetSocketId);
 
-        console.log(`🏗️ Creating RTC for ${targetSocketId} | Offeror: ${isOfferor}`);
         const pc = new RTCPeerConnection(configuration);
         peerConnections.current.set(targetSocketId, pc);
         pendingConnections.current.delete(targetSocketId);
@@ -168,19 +169,26 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
 
         pc.ontrack = (event) => {
             console.log(`🔊 Audio stream arrived from ${targetSocketId}`);
-            if (event.streams && event.streams[0]) {
-                let audio = remoteAudiosRef.current.get(targetSocketId);
-                if (!audio) {
-                    audio = document.createElement("audio");
-                    audio.autoplay = true;
-                    audio.style.display = "none";
-                    document.body.appendChild(audio);
-                    remoteAudiosRef.current.set(targetSocketId, audio);
-                }
-                audio.srcObject = event.streams[0];
-                audio.volume = 1;
-                audio.play().catch(e => console.warn("Autoplay block:", e));
+            const stream = (event.streams && event.streams[0]) || new MediaStream([event.track]);
+
+            let audio = remoteAudiosRef.current.get(targetSocketId);
+            if (!audio) {
+                audio = document.createElement("audio");
+                audio.autoplay = true;
+                audio.style.display = "none";
+                document.body.appendChild(audio);
+                remoteAudiosRef.current.set(targetSocketId, audio);
             }
+            audio.srcObject = stream;
+            audio.volume = 1;
+
+            const playAudio = () => {
+                audio!.play().catch(() => {
+                    console.warn("🔊 Autoplay blocked, waiting for interaction");
+                    document.addEventListener('click', playAudio, { once: true });
+                });
+            };
+            playAudio();
         };
 
         pc.onconnectionstatechange = () => {
@@ -214,7 +222,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
     };
 
     const joinVoice = async () => {
-        if (isConnected) {
+        if (isConnectedRef.current) {
             emitJoin();
             return;
         }
