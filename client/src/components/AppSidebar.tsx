@@ -17,11 +17,13 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 
+import { cn } from "@/lib/utils"
+
 export function AppSidebar() {
     const location = useLocation()
     const { user } = useAuth()
     const isAdmin = authService.isAuthenticated()
-    const { open } = useSidebar()
+    const { open, setOpen, isMobile } = useSidebar()
 
     const navItems = [
         { label: "Home", path: ROUTES.HOME, icon: Mic2 },
@@ -38,8 +40,9 @@ export function AppSidebar() {
 
     return (
         <Sidebar>
-            <SidebarHeader className="flex items-center justify-between">
-                <Link to={ROUTES.HOME} className="flex items-center gap-2 group overflow-hidden">
+            <SidebarHeader className={cn("flex items-center", open ? "justify-between px-4" : "justify-center py-4")}>
+                {open && (
+                    <Link to={ROUTES.HOME} className="flex items-center gap-2 group overflow-hidden animate-in fade-in duration-300">
                     <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg shadow-orange-500/20 shrink-0">
                         <Mic2 className="w-4 h-4 text-black" />
                     </div>
@@ -49,6 +52,7 @@ export function AppSidebar() {
                         </span>
                     )}
                 </Link>
+                )}
                 <SidebarTrigger />
             </SidebarHeader>
 
@@ -59,7 +63,7 @@ export function AppSidebar() {
                         {navItems.map(item => (
                             <SidebarMenuItem key={item.path}>
                                 <SidebarMenuButton asChild isActive={location.pathname === item.path}>
-                                    <Link to={item.path} className="flex items-center gap-3 w-full">
+                                    <Link to={item.path} onClick={() => isMobile && setOpen(false)} className="flex items-center gap-3 w-full">
                                         <item.icon className="w-4 h-4" />
                                         {open && <span className="animate-in fade-in duration-200">{item.label}</span>}
                                     </Link>
@@ -76,7 +80,7 @@ export function AppSidebar() {
                             {adminItems.map(item => (
                                 <SidebarMenuItem key={item.path}>
                                     <SidebarMenuButton asChild isActive={location.pathname === item.path}>
-                                        <Link to={item.path} className="flex items-center gap-3 w-full">
+                                        <Link to={item.path} onClick={() => isMobile && setOpen(false)} className="flex items-center gap-3 w-full">
                                             <item.icon className="w-4 h-4 text-orange-400" />
                                             {open && <span className="animate-in fade-in duration-200">{item.label}</span>}
                                         </Link>
@@ -93,7 +97,7 @@ export function AppSidebar() {
                     {user && (
                         <SidebarMenuItem>
                             <SidebarMenuButton asChild isActive={location.pathname === ROUTES.USER_PROFILE}>
-                                <Link to={ROUTES.USER_PROFILE} className="flex items-center gap-3 w-full">
+                                <Link to={ROUTES.USER_PROFILE} onClick={() => isMobile && setOpen(false)} className="flex items-center gap-3 w-full">
                                     {user.image ? (
                                         <img src={user.image} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
                                     ) : (

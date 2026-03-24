@@ -9,7 +9,7 @@ interface SidebarContextType {
     toggleSidebar: () => void
 }
 
-const SidebarContext = React.createContext<SidebarContextType | undefined>(undefined)
+export const SidebarContext = React.createContext<SidebarContextType | undefined>(undefined)
 
 export function useSidebar() {
     const context = React.useContext(SidebarContext)
@@ -54,14 +54,14 @@ export function Sidebar({ children, className }: { children: React.ReactNode; cl
                 {/* Mobile Backdrop */}
                 {open && (
                     <div 
-                        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+                        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
                         onClick={() => setOpen(false)}
                     />
                 )}
                 {/* Mobile Drawer */}
                 <aside 
                     className={cn(
-                        "fixed top-0 bottom-0 left-0 z-50 w-64 bg-[#0c0c0c] border-r border-white/5 flex flex-col transition-transform duration-300 ease-out transform",
+                        "fixed top-0 bottom-0 left-0 z-[100] w-64 bg-[#0c0c0c] border-r border-white/5 flex flex-col transition-transform duration-300 ease-out transform",
                         open ? "translate-x-0" : "-translate-x-full",
                         className
                     )}
@@ -143,7 +143,7 @@ export function SidebarMenuButton({
         <button
             className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-sm text-white/50 hover:text-white hover:bg-white/[0.03] group relative",
-                isActive && "bg-orange-500/10 text-orange-400 font-bold border border-orange-500/10 shadow-sm",
+                isActive && "text-orange-400 font-bold shadow-sm",
                 !open && "justify-center px-0 w-10 mx-auto",
                 className
             )}

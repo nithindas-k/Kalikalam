@@ -1,5 +1,7 @@
+import * as React from "react";
 import { Mic2, LogOut, Shield, User, MessageCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { SidebarTrigger, SidebarContext } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { authService } from "@/services/authService";
@@ -13,6 +15,7 @@ export default function Navbar() {
     const isAdmin = authService.isAuthenticated();
     const adminData = authService.getAdminData();
     const { user, login } = useAuth();
+    const sidebar = React.useContext(SidebarContext);
 
     const handleLogout = () => {
         authService.logout();
@@ -25,7 +28,9 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <Link to={ROUTES.HOME} className="flex items-center gap-1.5 sm:gap-2 group shrink-0">
+                    <div className="flex items-center gap-1">
+                        {sidebar && <SidebarTrigger className="lg:hidden text-white/50 hover:text-white transition-colors" />}
+                        <Link to={ROUTES.HOME} className="flex items-center gap-1.5 sm:gap-2 group shrink-0">
                         <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-primary flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-primary/20">
                             <Mic2 className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-black" />
                         </div>
@@ -33,10 +38,11 @@ export default function Navbar() {
                             Kali<span className="text-primary">kalam</span>
                         </span>
                     </Link>
+                    </div>
 
                     {/* Nav actions */}
                     <div className="flex items-center gap-0.5 sm:gap-3">
-                        <div className="flex items-center gap-0.5">
+                        <div className="hidden md:flex items-center gap-0.5">
                             {location.pathname !== ROUTES.AUDIOS && (
                                 <Link to={ROUTES.AUDIOS} title="Audios">
                                     <Button variant="ghost" size="sm" className="px-1.5 sm:px-3 h-8 sm:h-9 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground">
@@ -144,7 +150,7 @@ export default function Navbar() {
                                 </Button>
                             </div>
                         )}
-
+                        
 
                     </div>
                 </div>
