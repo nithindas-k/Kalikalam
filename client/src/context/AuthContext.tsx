@@ -86,8 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     if (response.ok) {
                         const updatedData = await response.json();
                         // Update local user state if it's the current user
-                        if (user && user.id === uid) {
-                            updateUser(updatedData);
+                        if (user && user.id === uid && updatedData.user) {
+                            updateUser(updatedData.user);
                         }
                     }
                 } catch (e) {
