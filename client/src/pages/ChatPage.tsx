@@ -121,30 +121,54 @@ export default function ChatPage() {
         }
     };
 
-    // Send image (base64)
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Send image (HTTP Upload + Socket)
+    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-            alert("Image too large (max 2MB)");
+        if (file.size > 10 * 1024 * 1024) { // Increase size allowance
+            alert("Image too large (max 10MB)");
             return;
         }
-        const reader = new FileReader();
-        reader.onloadend = () => sendMessage("image", reader.result as string);
-        reader.readAsDataURL(file);
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/chat/upload`, {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.url) sendMessage("image", data.url);
+        } catch (err) {
+            console.error("Upload failed:", err);
+            alert("Failed to upload image.");
+        }
         e.target.value = "";
     };
 
-    // Send voice note
+    // Send voice note (HTTP Upload + Socket)
     const handleMicToggle = async () => {
         if (!recording) {
             await startRecording();
         } else {
             const blob = await stopRecording();
             if (!blob) return;
-            const reader = new FileReader();
-            reader.onloadend = () => sendMessage("audio", reader.result as string);
-            reader.readAsDataURL(blob);
+
+            const formData = new FormData();
+            formData.append("audio", blob, "voice-note.m4a");
+
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/chat/upload`, {
+                    method: "POST",
+                    body: formData,
+                });
+                const data = await res.json();
+                if (data.url) sendMessage("audio", data.url);
+            } catch (err) {
+                console.error("Upload failed:", err);
+                alert("Failed to upload audio.");
+            }
         }
     };
 

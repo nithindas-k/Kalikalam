@@ -42,6 +42,23 @@ app.use(`${API_ROUTES.BASE}${API_ROUTES.AUDIOS}`, audioRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.VIDEOS}`, videoRoutes);
 app.use(`${API_ROUTES.BASE}${API_ROUTES.ADMIN}`, adminRoutes);
 
+// ─── Chat Static Media Upload Endpoint ──────────────────────────────────────
+import { upload } from "./config/multer";
+app.post(`${API_ROUTES.BASE}/chat/upload`, upload, (req: any, res) => {
+    const files = req.files;
+    let url = "";
+
+    if (files?.image?.[0]) {
+        url = files.image[0].path;
+    } else if (files?.audio?.[0]) {
+        url = files.audio[0].path;
+    } else {
+        return res.status(400).json({ error: "No files uploaded or invalid field names." });
+    }
+
+    res.json({ url });
+});
+
 app.get("/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
@@ -53,10 +70,10 @@ const httpServer = http.createServer(app);
 
 const io = new SocketIOServer(httpServer, {
     cors: {
-        origin: true,   // allow all origins — no cookie auth needed for chat
+        origin: true,   
         methods: ["GET", "POST"],
     },
-    maxHttpBufferSize: 2e7, // 20 MB buffer allowance for base64 media uploads
+    maxHttpBufferSize: 2e7, 
 });
 
 // ─── Chat Message interface ───────────────────────────────────────────────────
