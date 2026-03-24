@@ -22,7 +22,7 @@ export default function LandingPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <Navbar onAddClick={() => setDialogOpen(true)} />
+            <Navbar />
             <HeroSection onAddClick={() => setDialogOpen(true)} />
             <UploadDialog
                 open={dialogOpen}
