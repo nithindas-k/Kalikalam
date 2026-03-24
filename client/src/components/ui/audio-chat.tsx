@@ -225,7 +225,7 @@ export function VoiceChat({
                   }}
                 >
                   <img
-                    src={participant.avatar || "/placeholder.svg"}
+                    src={participant.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${participant.name}`}
                     alt={participant.name}
                     className="w-full h-full object-cover"
                   />

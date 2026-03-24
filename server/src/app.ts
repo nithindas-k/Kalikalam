@@ -173,9 +173,9 @@ io.on("connection", async (socket) => {
             isSpeaking: false
         });
 
-        // 1. Send CURRENT state list back to the guy joining
+        // 1. Send CURRENT state list back to EVERYONE including the newly joined guy
         const others = Array.from(voiceParticipants.values()).filter(p => p.socketId !== socket.id);
-        socket.emit("voice:participants", Array.from(voiceParticipants.values()));
+        io.emit("voice:participants", Array.from(voiceParticipants.values()));
 
         // 2. Broadcast to everyone else that a new guy joined so they create RTCPeerConnection Offer
         socket.broadcast.emit("voice:user-joined", {
