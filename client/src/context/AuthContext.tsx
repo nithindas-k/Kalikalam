@@ -7,6 +7,13 @@ interface User {
     email: string;
     image: string;
     role: "user" | "admin";
+    location?: {
+        name: string;
+        district?: string;
+        state?: string;
+        lat: number;
+        lng: number;
+    };
 }
 
 interface AuthContextType {
@@ -37,8 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (isExpired) {
                     logout();
                 } else {
+                    const parsedUser = JSON.parse(savedUser);
                     setToken(savedToken);
-                    setUser(JSON.parse(savedUser));
+                    setUser(parsedUser);
+                    syncLocation(parsedUser.id); // Sync location on initial load
                 }
             } catch {
                 logout();
@@ -47,11 +56,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
     }, []);
 
+    const syncLocation = (uid: string) => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                
+                // 🌍 ADAPTIVE MULTI-LAYER GEOCODING
+                let locationDetails = { name: "Safe Hub", district: "Kerala", state: "India" };
+                try {
+                   const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                   const data = await res.json();
+                   const addr = data.address;
+                   locationDetails = {
+                      name: addr.city || addr.town || addr.village || addr.suburb || "Local Hub",
+                      district: addr.county || addr.district || "Kerala District",
+                      state: addr.state || "Kerala"
+                   };
+                } catch (e) { console.warn("Reverse geocode failed", e); }
+
+                try {
+                    await fetch(`http://localhost:5000/api/auth/profile/${uid}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                           location: { ...locationDetails, lat: latitude, lng: longitude } 
+                        })
+                    });
+                } catch (e) {
+                    console.error("Auto-location sync failed", e);
+                }
+            }, (err) => {
+               console.warn("User GPS denied", err);
+            });
+        }
+    };
+
     const login = (newToken: string, userData: User) => {
         setToken(newToken);
         setUser(userData);
         localStorage.setItem("auth_token", newToken);
         localStorage.setItem("auth_user", JSON.stringify(userData));
+        syncLocation(userData.id); // Sync location on login
     };
 
     const logout = () => {

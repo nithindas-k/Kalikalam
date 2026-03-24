@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { Mic2, MessageCircle, Music, Play, User, Shield, LogOut, Bell, Smartphone } from "lucide-react"
+import { Mic2, MessageCircle, Music, Play, User, Shield, LogOut, Bell, Smartphone, Sparkles, Activity } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { registerPushNotifications } from "@/lib/push-notifications"
 import { useEffect, useState } from "react"
@@ -70,6 +70,8 @@ export function AppSidebar() {
         { label: "Videos", path: ROUTES.VIDEOS, icon: Play },
         { label: "Chat", path: ROUTES.CHAT, icon: MessageCircle },
         { label: "Voice Room", path: "/voice", icon: Mic2 },
+        { label: "Services", path: ROUTES.SERVICES, icon: Sparkles },
+        { label: "Status", path: ROUTES.STATUS, icon: Activity },
     ]
 
     const adminItems = [

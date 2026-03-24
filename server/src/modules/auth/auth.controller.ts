@@ -86,7 +86,7 @@ export const googleLogin = async (req: Request, res: Response) => {
 // ─── Update Profile Controller ──────────────────────────────────────────────
 export const updateProfile = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, image } = req.body;
+    const { name, image, location } = req.body;
 
     try {
         const user = await UserModel.findById(id);
@@ -94,6 +94,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 
         if (name) user.name = name;
         if (image) user.image = image;
+        if (location) user.location = location;
 
         await user.save();
 
@@ -105,9 +106,19 @@ export const updateProfile = async (req: Request, res: Response) => {
                 email: user.email,
                 image: user.image,
                 role: user.role,
+                location: user.location,
             },
         });
     } catch (error) {
         res.status(500).json({ error: "Failed to update profile" });
+    }
+};
+
+export const getAllUsers = async (req: Request, res: Response) => {
+    try {
+        const users = await UserModel.find({}, "name image email role location createdAt").sort({ createdAt: -1 });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch users" });
     }
 };

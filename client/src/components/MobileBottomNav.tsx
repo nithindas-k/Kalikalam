@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Mic2, MessageCircle, Music, Play } from "lucide-react";
+import { Mic2, MessageCircle, Music, Sparkles, Activity } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -12,9 +12,9 @@ export default function MobileBottomNav() {
 
     const navItems = [
         { label: "Home", path: ROUTES.HOME, icon: Mic2 },
+        { label: "Status", path: ROUTES.STATUS, icon: Activity },
+        { label: "Services", path: ROUTES.SERVICES, icon: Sparkles },
         { label: "Audios", path: ROUTES.AUDIOS, icon: Music },
-        { label: "Videos", path: ROUTES.VIDEOS, icon: Play },
-        { label: "Room", path: "/voice", icon: Mic2 },
         { label: "Chat", path: ROUTES.CHAT, icon: MessageCircle, protected: true },
     ];
 

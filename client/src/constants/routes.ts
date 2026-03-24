@@ -10,4 +10,6 @@ export const ROUTES = {
     ADMIN_VIDEOS: "/admin/videos",
     PROFILE: "/profile",
     USER_PROFILE: "/user/profile",
+    SERVICES: "/services",
+    STATUS: "/status",
 } as const;

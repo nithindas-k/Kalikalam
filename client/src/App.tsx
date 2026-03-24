@@ -15,6 +15,8 @@ import ProfilePage from "@/pages/admin/ProfilePage";
 import UserProfilePage from "@/pages/UserProfilePage";
 import ChatPage from "@/pages/ChatPage";
 import VoicePage from "@/pages/VoicePage";
+import ServicesPage from "@/pages/ServicesPage";
+import StatusPage from "@/pages/StatusPage";
 import { useAuth } from "@/context/AuthContext";
 import UserLayout from "@/components/UserLayout";
 import { VoiceChatProvider } from "@/context/VoiceChatContext";
@@ -52,6 +54,8 @@ export default function App() {
               <Route path={ROUTES.VIDEOS} element={<UserLayout><VideosPage /></UserLayout>} />
               <Route path={ROUTES.CHAT} element={<ProtectedRoute><UserLayout><ChatPage /></UserLayout></ProtectedRoute>} />
               <Route path="/voice" element={<UserLayout><VoicePage /></UserLayout>} />
+              <Route path={ROUTES.SERVICES} element={<UserLayout><ServicesPage /></UserLayout>} />
+              <Route path={ROUTES.STATUS} element={<UserLayout><StatusPage /></UserLayout>} />
 
               <Route path={ROUTES.ADMIN_LOGIN} element={<LoginPage />} />
               <Route path={ROUTES.ADMIN_REGISTER} element={<RegisterPage />} />
