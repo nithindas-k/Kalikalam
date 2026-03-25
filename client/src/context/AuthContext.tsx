@@ -107,15 +107,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         toast.error("Failed to connect to server.");
                     }
                 }
-            }, (err) => {
-               console.warn("User GPS denied", err);
-               if (isManual) {
-                  toast.dismiss((toast as any).__gpsId);
-                  if (err.code === err.PERMISSION_DENIED) {
-                     toast.error("Location permission denied. Please enable it in browser settings.");
-                  } else {
-                     toast.error("Failed to acquire GPS signal.");
+            }, async (err) => {
+               console.warn("User GPS denied/failed, trying IP fallback...", err);
+               
+               // --- 🛡️ REAL-WORLD IP FALLBACK ---
+               try {
+                  const ipRes = await fetch("https://ipapi.co/json/");
+                  const ipData = await ipRes.json();
+                  if (ipData.latitude && ipData.longitude) {
+                     const fallbackLocation = {
+                        name: ipData.city || "Proxy Hub",
+                        district: ipData.region || "Unknown",
+                        state: ipData.country_name || "India",
+                        lat: ipData.latitude,
+                        lng: ipData.longitude
+                     };
+                     
+                     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/auth/profile/${uid}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ location: fallbackLocation })
+                     });
+
+                     if (response.ok && isManual) {
+                        toast.dismiss((toast as any).__gpsId);
+                        toast.success("Syncing via Network IP (approximate)");
+                     }
                   }
+               } catch (ipErr) {
+                  console.error("IP fallback failed", ipErr);
+                  if (isManual) {
+                     toast.dismiss((toast as any).__gpsId);
+                     toast.error("Complete location failure.");
+                   }
                }
             }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
         } else if (isManual) {

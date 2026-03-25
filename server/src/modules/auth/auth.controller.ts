@@ -33,7 +33,7 @@ export const googleLogin = async (req: Request, res: Response) => {
             const googleRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
             const payload = await googleRes.json() as { email?: string; name?: string; picture?: string };
             console.log("🔍 Google Login Access Token Payload:", payload); // 🔬 DEBUG LOG
-            
+
             if (!payload.email) return res.status(400).json({ error: "Invalid access token" });
             name = payload.name || "";
             email = payload.email;
@@ -116,7 +116,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
-        const users = await UserModel.find({}, "name image email role location createdAt").sort({ createdAt: -1 });
+        const users = await UserModel.find({}, "name image email role location updatedAt createdAt").sort({ createdAt: -1 });
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch users" });
