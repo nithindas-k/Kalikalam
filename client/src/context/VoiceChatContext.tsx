@@ -92,13 +92,25 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             }
         });
 
-        socket.on("voice:participants", (list: any[]) => {
+        socket.on("voice:participants", async (list: any[]) => {
+            const currentSocketId = socketRef.current?.id;
+           
             setParticipants(list.map(p => ({
                 id: p.id,
                 name: p.name,
                 avatar: p.avatar,
                 isSpeaking: p.isSpeaking
             })));
+
+            // 2. 🔌 AUTO-CONNECT: If I am connected, check if I need to connect to anyone new
+            if (isConnectedRef.current) {
+                for (const p of list) {
+                    if (p.socketId !== currentSocketId && !peerConnections.current.has(p.socketId)) {
+                        console.log(`🔌 Joining existing participant: ${p.name} (${p.socketId})`);
+                        await createPeerConnection(p.socketId, true);
+                    }
+                }
+            }
         });
 
         socket.on("voice:user-joined", async (data: { id: string; socketId: string; name: string }) => {
