@@ -37,7 +37,7 @@ export default function StatusPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [view, setView] = useState<"world" | "india" | "kerala">("world");
-  const [activeTab, setActiveTab] = useState<"map" | "list">("map"); // Mobile Toggler
+  const [activeTab, setActiveTab] = useState<"map" | "list">("map");
   const [mapTheme, setMapTheme] = useState<"dark" | "light">("dark");
   const [indiaGeo, setIndiaGeo] = useState<any>(null);
   const [keralaGeo, setKeralaGeo] = useState<any>(null);
@@ -83,7 +83,6 @@ export default function StatusPage() {
   const MapController = () => {
     const map = useMap();
     const prevView = useRef<string>(view);
-    
     
     useEffect(() => {
        if (prevView.current !== view) {

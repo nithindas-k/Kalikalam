@@ -101,9 +101,17 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             })));
         });
 
-        socket.on("voice:user-joined", async (data: { socketId: string; name: string }) => {
+        socket.on("voice:user-joined", async (data: { id: string; socketId: string; name: string }) => {
+            const currentUserId = (userRef.current as any)?._id || (userRef.current as any)?.id;
+            if (data.id === currentUserId) return; // 🛑 SELF-CONNECTION PREVENTION
+            
             console.log(`🎙️ New peer joined: ${data.name} (${data.socketId})`);
             await createPeerConnection(data.socketId, true);
+        });
+
+        socket.on("voice:force-leave", () => {
+             console.warn("⚠️ Forcefully disconnected by server due to duplicate session.");
+             leaveVoice();
         });
 
         const handleSignal = async (data: { from: string; signal: any }) => {

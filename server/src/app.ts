@@ -183,7 +183,16 @@ io.on("connection", async (socket) => {
     socket.on("voice:join", (user: { id: string; name: string; avatar: string }) => {
         console.log(`🎙️ User joined voice: ${user.name} (${socket.id})`);
         
-       
+        // 🚨 COLLISION PREVENTION: Check if user already exists on a different socket
+        for (const [sId, participant] of voiceParticipants.entries()) {
+            if (participant.id === user.id && sId !== socket.id) {
+                console.log(`⚠️ Cleaning up ghost session for ${user.name} (${sId})`);
+                voiceParticipants.delete(sId);
+                socket.to(sId).emit("voice:force-leave"); 
+                socket.broadcast.emit("voice:user-left", { socketId: sId });
+            }
+        }
+
         voiceParticipants.set(socket.id, {
             id: user.id,
             name: user.name,
