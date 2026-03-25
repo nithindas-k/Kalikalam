@@ -116,7 +116,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
-        const users = await UserModel.find({}, "name image email role location updatedAt createdAt").sort({ createdAt: -1 });
+        const users = await UserModel.find({}, "name image email role location updatedAt createdAt").sort({ updatedAt: -1 });
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch users" });

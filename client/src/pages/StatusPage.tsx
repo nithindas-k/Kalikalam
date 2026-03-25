@@ -84,6 +84,7 @@ export default function StatusPage() {
     const map = useMap();
     const prevView = useRef<string>(view);
     
+    
     useEffect(() => {
        if (prevView.current !== view) {
           if (view === "world") {
@@ -99,6 +100,17 @@ export default function StatusPage() {
           prevView.current = view;
        }
     }, [view, map]);
+
+    // Zoom-to-user controller
+    useEffect(() => {
+      if (selectedUser?.location?.lat && selectedUser?.location?.lng) {
+        map.flyTo(
+          [selectedUser.location.lat, selectedUser.location.lng], 
+          12, // Zoom level for specific user
+          { duration: 1.5 }
+        );
+      }
+    }, [selectedUser, map]);
 
     return null;
   };
