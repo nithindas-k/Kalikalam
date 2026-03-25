@@ -78,6 +78,9 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.setItem("voice_active", "true");
     };
 
+    // Perfect Negotiation state tracking for robust signaling
+    const peerStates = useRef<Map<string, { makingOffer: boolean, ignoreOffer: boolean }>>(new Map());
+
     useEffect(() => {
         const socket = io(SOCKET_URL, {
             query: { userName: "User_" + Math.random().toString(36).slice(2, 6) },
@@ -94,7 +97,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
 
         socket.on("voice:participants", async (list: any[]) => {
             const currentSocketId = socketRef.current?.id;
-           
+            
             setParticipants(list.map(p => ({
                 id: p.id,
                 name: p.name,
@@ -102,12 +105,11 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
                 isSpeaking: p.isSpeaking
             })));
 
-            // 2. 🔌 AUTO-CONNECT: If I am connected, check if I need to connect to anyone new
             if (isConnectedRef.current) {
                 for (const p of list) {
                     if (p.socketId !== currentSocketId && !peerConnections.current.has(p.socketId)) {
                         console.log(`🔌 Joining existing participant: ${p.name} (${p.socketId})`);
-                        await createPeerConnection(p.socketId, true);
+                        await createPeerConnection(p.socketId);
                     }
                 }
             }
@@ -118,6 +120,9 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             if (data.id === currentUserId) return; 
             
             console.log(`🎙️ New peer joined: ${data.name} (${data.socketId})`);
+            // In perfect negotiation, every join triggers a potential connection attempt
+            // which will be negotiated via onnegotiationneeded
+            await createPeerConnection(data.socketId);
         });
 
         socket.on("voice:force-leave", () => {
@@ -127,41 +132,64 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
 
         const handleSignal = async (data: { from: string; signal: any }) => {
             let pc = peerConnections.current.get(data.from);
+            const state = peerStates.current.get(data.from) || { makingOffer: false, ignoreOffer: false };
 
-            if (data.signal.sdp) {
-                if (!pc) {
-                    if (pendingConnections.current.has(data.from)) {
-                        setTimeout(() => handleSignal(data), 100);
+            try {
+                if (data.signal.sdp) {
+                    if (!pc) {
+                        pc = await createPeerConnection(data.from);
+                    }
+
+                    // Glare handling: check if we are already in the middle of making an offer
+                    const offerCollision = data.signal.sdp.type === "offer" && 
+                                          (state.makingOffer || pc.signalingState !== "stable");
+
+                    // Decide who is "polite" based on relative socket ID strings
+                    const isPolite = (socketRef.current?.id || "") < data.from;
+                    state.ignoreOffer = !isPolite && offerCollision;
+
+                    if (state.ignoreOffer) {
+                        console.log(`🤝 Collision: [Impolite] Ignoring offer from ${data.from}`);
                         return;
                     }
-                    console.log(`🤝 Received signal from ${data.from}, creating PeerConnection`);
-                    pc = await createPeerConnection(data.from, false);
-                }
 
-                try {
+                    if (offerCollision && isPolite) {
+                        console.log(`🤝 Collision: [Polite] Rolling back for ${data.from}`);
+                        await pc.setLocalDescription({ type: "rollback" } as any);
+                    }
+
                     await pc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
                     if (data.signal.sdp.type === "offer") {
-                        const answer = await pc.createAnswer();
-                        await pc.setLocalDescription(answer);
-                        socketRef.current?.emit("voice:signal", { to: data.from, signal: { sdp: pc.localDescription } });
+                        await pc.setLocalDescription(await pc.createAnswer());
+                        socketRef.current?.emit("voice:signal", { 
+                            to: data.from, 
+                            signal: { sdp: pc.localDescription } 
+                        });
                     }
+
+                    // Process candidates that arrived before the SDP
                     const queued = iceCandidatesQueue.current.get(data.from) || [];
-                    while (queued.length > 0) {
-                        const candidate = queued.shift();
-                        if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                    for (const candidate of queued) {
+                        await pc.addIceCandidate(new RTCIceCandidate(candidate));
                     }
                     iceCandidatesQueue.current.delete(data.from);
-                } catch (e) {
-                    console.error("SDP error:", e);
+
+                } else if (data.signal.candidate) {
+                    try {
+                        if (pc && pc.remoteDescription) {
+                            await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                        } else {
+                            // Queue candidates until desc is ready
+                            const queue = iceCandidatesQueue.current.get(data.from) || [];
+                            queue.push(data.signal.candidate);
+                            iceCandidatesQueue.current.set(data.from, queue);
+                        }
+                    } catch (err) {
+                        if (!state.ignoreOffer) throw err;
+                    }
                 }
-            } else if (data.signal.candidate) {
-                if (pc && pc.remoteDescription && pc.signalingState !== "closed") {
-                    try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch { }
-                } else {
-                    const queue = iceCandidatesQueue.current.get(data.from) || [];
-                    queue.push(data.signal.candidate);
-                    iceCandidatesQueue.current.set(data.from, queue);
-                }
+            } catch (err) {
+                console.error("❌ Signaling error:", err);
             }
         };
 
@@ -177,13 +205,12 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
-    const createPeerConnection = async (targetSocketId: string, isOfferor: boolean) => {
+    const createPeerConnection = async (targetSocketId: string) => {
         if (peerConnections.current.has(targetSocketId)) return peerConnections.current.get(targetSocketId)!;
-        pendingConnections.current.add(targetSocketId);
-
+        
         const pc = new RTCPeerConnection(configuration);
         peerConnections.current.set(targetSocketId, pc);
-        pendingConnections.current.delete(targetSocketId);
+        peerStates.current.set(targetSocketId, { makingOffer: false, ignoreOffer: false });
 
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => {
@@ -191,9 +218,30 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             });
         }
 
+        // PERFECT NEGOTIATION HANDLER: fires whenever connection state needs update (tracks added, etc)
+        pc.onnegotiationneeded = async () => {
+            const state = peerStates.current.get(targetSocketId);
+            if (!state) return;
+            try {
+                state.makingOffer = true;
+                await pc.setLocalDescription();
+                socketRef.current?.emit("voice:signal", { 
+                    to: targetSocketId, 
+                    signal: { sdp: pc.localDescription } 
+                });
+            } catch (err) {
+                console.error("❌ Negotiation error:", err);
+            } finally {
+                state.makingOffer = false;
+            }
+        };
+
         pc.onicecandidate = (event) => {
             if (event.candidate) {
-                socketRef.current?.emit("voice:signal", { to: targetSocketId, signal: { candidate: event.candidate } });
+                socketRef.current?.emit("voice:signal", { 
+                    to: targetSocketId, 
+                    signal: { candidate: event.candidate } 
+                });
             }
         };
 
@@ -214,7 +262,7 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
             audio.volume = 1;
 
             const playAudio = () => {
-                audio!.play().catch(() => {
+                audio?.play().catch(() => {
                     console.warn("🔊 Autoplay blocked, waiting for interaction");
                     document.addEventListener('click', playAudio, { once: true });
                 });
@@ -223,31 +271,18 @@ export function VoiceChatProvider({ children }: { children: React.ReactNode }) {
         };
 
         pc.oniceconnectionstatechange = () => {
-            console.log(`🧊 ICE State for ${targetSocketId}: ${pc.iceConnectionState}`);
-            if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
-                setTimeout(() => {
-                    if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
-                        closePeerConnection(targetSocketId);
-                    }
-                }, 3000);
+            if (pc.iceConnectionState === "failed") {
+                console.log(`🧊 ICE Failed for ${targetSocketId}, restarting...`);
+                pc.restartIce();
             }
         };
 
         pc.onconnectionstatechange = () => {
-            if (pc.connectionState === "disconnected" || pc.connectionState === "failed" || pc.connectionState === "closed") {
+            if (pc.connectionState === "failed") {
+                console.log(`🔌 Connection failed for ${targetSocketId}, cleaning up...`);
                 closePeerConnection(targetSocketId);
             }
         };
-
-        if (isOfferor) {
-            try {
-                const offer = await pc.createOffer({ offerToReceiveAudio: true });
-                await pc.setLocalDescription(offer);
-                socketRef.current?.emit("voice:signal", { to: targetSocketId, signal: { sdp: pc.localDescription } });
-            } catch (err) {
-                console.error("Failed to create offer:", err);
-            }
-        }
 
         return pc;
     };
